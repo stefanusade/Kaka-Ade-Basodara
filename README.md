@@ -1,110 +1,153 @@
-# Kaka Ade Basodara — Landing Page
+# Kaka Ade Basodara — One Stop Digital Solution
 
-Next.js 14 (App Router) + TypeScript + Tailwind CSS + Framer Motion.
+Landing page untuk **Kaka Ade Basodara**, digital agency yang menyediakan
+hosting, web development, B2B IoT development, serta branding & design.
+Konten (proyek dan artikel blog) diambil langsung dari headless CMS
+(`https://cms.kakaadebasodara.com/api/v1`) saat halaman diminta, lalu di-cache
+dengan ISR — tim marketing bisa mengelola konten dari dashboard CMS sementara
+situnya tetap cepat.
+
+## Fitur
+
+- **Hero + Services** — intro agency dan empat lini layanan utama
+- **Projects showcase** — proyek terbaru dari CMS, lengkap dengan halaman
+  daftar (`/projects`) dan detail (`/projects/[slug]`)
+- **Blog / Insights** — artikel dari CMS, daftar (`/blog`) + detail
+  (`/blog/[slug]`)
+- **Newsletter form** — form email yang terhubung ke API route lokal
+  (`/api/newsletter`, masih stub)
+- **SEO-ready** — metadata, Open Graph, `sitemap.xml`, `robots.txt`
+- **Responsive** — mobile nav, layout adaptif, animasi scroll reveal
+  (Framer Motion)
+- **Fast by default** — server components, ISR caching, lazy-loaded images
+
+## Tech stack
+
+| Layer | Pilihan |
+|---|---|
+| Framework | Next.js 14 (App Router) |
+| Bahasa | TypeScript (strict) |
+| Styling | Tailwind CSS + primitif CVA/Radix |
+| Animasi | Framer Motion |
+| Ikon | lucide-react |
+| Data | Headless CMS (`https://cms.kakaadebasodara.com/api/v1`) + ISR |
 
 ## Getting started
 
+Prasyarat: Node.js 18.17+ (diuji pada 22.x).
+
 ```bash
 npm install
-cp .env.example .env.local
-# fill in CMS_API_KEY and NEXT_PUBLIC_CMS_MEDIA_URL in .env.local
+cp .env.example .env.local   # lalu isi CMS_API_KEY
 npm run dev
 ```
 
-Open http://localhost:3000.
+Buka http://localhost:3000.
 
-## ⚠️ Before you go further — rotate your CMS API key
+## Environment variables
 
-An API key was shared in plain text during development. Treat it as
-compromised even though it's read-only, and generate a fresh one from your
-CMS dashboard. Never commit `.env.local` — only `.env.example` (with no real
-values) should be in version control.
+| Variable | Wajib | Default |
+|---|---|---|
+| `CMS_API_KEY` | ya — tanpa ini semua konten 401 | — |
+| `CMS_BASE_URL` | tidak | `https://cms.kakaadebasodara.com/api/v1` |
+| `NEXT_PUBLIC_CMS_MEDIA_URL` | tidak | `https://cms.kakaadebasodara.com/files` |
+| `NEXT_PUBLIC_SITE_URL` | tidak | `https://kakaadebasodara.com` |
 
-## Project structure
+> **Keamanan**: `.env.local` di-gitignore dan tidak boleh di-commit. Hanya
+> `.env.example` (tanpa nilai asli) yang masuk version control. Generate API
+> key dari dashboard CMS — anggap key yang pernah dibagikan di luar CMS sudah
+> bocor dan segera rotasi.
+
+## Struktur proyek
 
 ```
 app/                        Routes (App Router)
-  layout.tsx                 Root layout, fonts, header/footer
-  page.tsx                   Home page (Hero, Services, Projects, Blog)
-  sitemap.ts / robots.ts      SEO
-  blog/, projects/            List + [slug] detail routes
-  api/newsletter/route.ts     Newsletter form handler (stub — wire to real provider)
+  layout.tsx / page.tsx      Root layout + halaman home (Hero, Services, Projects, Blog)
+  projects/ + blog/          Halaman daftar + [slug] detail
+  sitemap.ts / robots.ts     SEO
+  api/newsletter/route.ts    Handler form newsletter (stub — belum ada provider)
 components/
-  ui/                         shadcn-style primitives (Button, extend as needed)
-  layout/                     Header, Footer, MobileNav
-  sections/                   Hero, Services, ProjectsShowcase, BlogInsights, NewsletterForm
-  common/                     FadeIn (Framer Motion), ErrorState, SectionHeading
+  ui/                        Primitif shadcn-style (Button)
+  layout/                    Header, Footer, MobileNav
+  sections/                  Hero, Services, ProjectsShowcase, BlogInsights, NewsletterForm
+  common/                    FadeIn, ErrorState, SectionHeading
 lib/
-  constants.ts                Site info, nav links, footer links
-  utils.ts                    cn(), formatDate()
-  media.ts                    resolveMediaUrl() — CMS relative path -> full URL
+  constants.ts               Info SITE, nav links, footer links
+  utils.ts                   cn(), formatDate()
+  media.ts                   resolveMediaUrl() — path relatif CMS → URL penuh
 services/
-  api-client.ts                Generic fetchCollection/fetchSingle with auth handling
-  posts.service.ts             getProjects(), getBlogPosts(), getProducts(), etc.
-  types/
-    api.types.ts                ApiEnvelope, ApiError, PostType
-    post.types.ts                Raw CMS shapes + clean UI shapes + mappers
+  api-client.ts              fetchCollection() / fetchSingle() — generik, auth + ISR
+  posts.service.ts           getProjects(), getBlogPosts(), getProducts(), get*BySlugOrId()
+  types/                     Bentuk raw CMS → bentuk clean UI (mapper)
 ```
 
-## ✅ Verified against the live CMS (2026-09-02)
+## Integrasi CMS (terverifikasi terhadap CMS live, 2026-09-02)
 
-1. **Auth header** — the CMS requires `X-API-Key: {key}` (Bearer is
-   rejected with 401). Handled in `services/api-client.ts` → `buildHeaders()`.
+- **Auth**: kirim header `X-API-Key: {key}`. Bearer token ditolak dengan 401
+  (ditangani di `services/api-client.ts` → `buildHeaders()`).
+- **Envelope**: `{ success, data, meta: { total, page, per_page, total_pages } }`.
+- **Collection**: `GET /api/v1/{postType}?per_page=N` → array di `data`.
+- **Single**: `GET /api/v1/{postType}/{id}` — bekerja dengan ID numerik (ini
+  yang diasumsikan `fetchSingle()`).
+- **Media**: CMS mengembalikan path relatif seperti `2026/09/xxxx.webp`;
+  di-resolve terhadap `NEXT_PUBLIC_CMS_MEDIA_URL` (default `.../files`).
+  Host gambar baru harus ditambahkan ke `next.config.mjs` →
+  `images.remotePatterns`.
+- **Caching**: ISR `revalidate: 3600` (1 jam) dengan request tags
+  (`projects`, `blog`, `products`) untuk revalidasi on-demand via webhook.
+- **Kondisi CMS saat ini**: `blog` masih **0 post** (section menampilkan "No
+  articles published yet" — ini normal, bukan bug). Content type `product`
+  **belum ada** di CMS (404); `getProducts()` tidak terpakai sampai ada.
 
-2. **Media base URL** — confirmed as `https://cms.kakaadebasodara.com/files`
-   (not `/storage`). Set `NEXT_PUBLIC_CMS_MEDIA_URL` accordingly; `lib/media.ts`
-   already defaults to `/files`.
+### Alur data
 
-3. **Single-item endpoint** — confirmed: `GET /api/v1/{postType}/{id}` works
-   (`fetchSingle()` in `services/api-client.ts`).
+- Fetch data berjalan di **server** (`page.tsx`) memakai `Promise.allSettled`,
+  jadi satu section gagal tidak merusak halaman.
+- Hanya tiga client components: `FadeIn`, `MobileNav`, `NewsletterForm`.
+  Selebihnya server component agar client JS minimal.
 
-4. **Slugs are derived** from the title (`slugify()` in
-   `services/types/post.types.ts`) — the `project` response has no `slug`
-   field. If the CMS provides real slugs elsewhere, swap the mapper.
+## Menambah post type baru
 
-## ⚠️ Still open
-
-- **`blog` fields** (`RawBlogFields`) are placeholders — the CMS currently
-  has 0 blog posts, so the real payload shape is unverified. The blog
-  section/pages will show "No articles published yet." until posts exist.
-- **`product` type does not exist on the CMS** (404 "Content type tidak
-  ditemukan."). `getProducts()` will fail if called; the type is not used on
-  any page. Remove it once the CMS actually provides a `product` content
-  type.
-
-## Scaling to new post types
-
-Adding e.g. `testimonial` or `team` requires no changes to `api-client.ts`.
-Just add raw/clean types + a mapper in `post.types.ts`, then a wrapper
-function in `posts.service.ts`:
+Menambah mis. `testimonial` tidak butuh perubahan di `api-client.ts`. Cukup
+tambah raw/clean types + mapper di `post.types.ts`, lalu wrapper di
+`posts.service.ts`:
 
 ```ts
 export const getTestimonials = () => fetchCollection<RawTestimonial>("testimonial");
 ```
 
-## Performance notes
+## Perintah
 
-- Only `FadeIn.tsx`, `MobileNav.tsx`, and `NewsletterForm.tsx` are client
-  components (`"use client"`). Everything else — including data fetching in
-  `page.tsx` — runs on the server, keeping client JS minimal.
-- Images use `next/image` with `fill` + `sizes` for responsive lazy loading.
-- Font loaded via `next/font/google` (self-hosted at build time, no extra
-  network request, no CLS).
-- Data is cached via ISR (`revalidate: 3600` default in `api-client.ts`).
-  Lower this, or wire CMS webhooks to call `revalidateTag()`, if you need
-  fresher content.
+```bash
+npm run dev                              # dev server
+npm run build                            # production build
+npm run start                            # serve production build
+npm run lint                             # ESLint
+npx tsc --noEmit                         # typecheck
+node --env-file=.env scripts/check-cms.mjs   # diagnosa koneksi/bentuk CMS
+```
 
 ## Deployment
 
-Recommended: Vercel (native ISR + image optimization). Set environment
+Rekomendasi: **Vercel** (ISR native + image optimization). Set environment
 variables (`CMS_API_KEY`, `CMS_BASE_URL`, `NEXT_PUBLIC_CMS_MEDIA_URL`,
-`NEXT_PUBLIC_SITE_URL`) in the hosting provider's dashboard — never in code.
+`NEXT_PUBLIC_SITE_URL`) di dashboard hosting — jangan pernah di dalam kode.
 
-Run a production build before testing PageSpeed/Lighthouse:
+Uji production build sebelum menilai performa (PageSpeed/Lighthouse):
 
 ```bash
 npm run build && npm run start
 ```
 
-Dev mode (`npm run dev`) is unoptimized and will show misleadingly worse
-performance metrics.
+Mode dev (`npm run dev`) tidak teroptimasi dan akan menampilkan metrik
+performa yang lebih buruk dari seharusnya.
+
+## Batasan yang diketahui
+
+- Route `/contact` belum ada, tetapi di-link dari CTA header, hero, dan mobile
+  nav (404) — perlu dibuat atau link-nya dihapus.
+- Link footer semuanya mengarah ke `#`; `SITE.phone` masih placeholder.
+- `api/newsletter/route.ts` masih stub — perlu dihubungkan ke provider email
+  (Mailchimp, Resend, dll.) sebelum rilis.
+- Slug saat ini diturunkan dari judul (`slugify(title, id)`) karena respons
+  CMS tidak punya field `slug`.
