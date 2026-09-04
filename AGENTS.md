@@ -41,7 +41,7 @@ Env vars are read at server startup — restart `npm run dev` after changes.
 ```
 app/                        Routes (App Router)
   layout.tsx / page.tsx      Root layout + home (Hero, Services, Projects, Blog)
-  projects/ + blog/          List + [slug] detail pages
+  projects/ + blog/          List + [id] detail pages
   sitemap.ts / robots.ts     SEO
   api/newsletter/route.ts    Newsletter stub (no provider wired yet)
 components/
@@ -55,7 +55,7 @@ lib/
   media.ts                   resolveMediaUrl() — relative CMS path → full URL
 services/
   api-client.ts              fetchCollection() / fetchSingle() — generic, auth + ISR
-  posts.service.ts           getProjects(), getBlogPosts(), getProducts(), get*BySlugOrId()
+  posts.service.ts           getProjects(), getBlogPosts(), getProducts(), get*ById()
   types/                     Raw CMS shapes → clean UI shapes (mappers)
 ```
 
@@ -89,8 +89,9 @@ services/
 - **Adding a new post type** (e.g. `testimonial`): add raw/clean types + a
   mapper in `post.types.ts`, then a ~5-line wrapper in `posts.service.ts`.
   `api-client.ts` needs no changes.
-- **Slugs are derived** from the title via `slugify(title, id)` — the CMS
-  response has no `slug` field. If real slugs appear, swap the mappers.
+- **Detail routes are id-based** (`/projects/[id]`, `/blog/[id]`) — the CMS
+  single-item endpoint only accepts numeric ids (`GET /{postType}/{id}`), so
+  URLs use the CMS numeric id, not a slug.
 - **Styling**: Tailwind with theme tokens (`brand`, `ink`) from
   `tailwind.config.ts`; combine classes with `cn()` from `lib/utils`.
 - **Images**: `next/image` with `fill` + `sizes` for responsive lazy loading.

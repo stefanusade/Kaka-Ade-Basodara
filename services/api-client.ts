@@ -73,9 +73,9 @@ export async function fetchCollection<TRaw>(
 }
 
 /**
- * Single-item fetch. NOTE: endpoint shape assumed as /{postType}/{idOrSlug}
- * until confirmed against the live CMS — verify with a real detail request
- * and adjust this URL construction if the CMS uses a different route/param.
+ * Single-item fetch. The CMS only accepts numeric ids for this endpoint:
+ * GET /{postType}/{id}. See scripts/check-cms.mjs to re-verify if the
+ * CMS shape ever changes.
  */
 export async function fetchSingle<TRaw>(
   postType: PostType,

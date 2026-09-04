@@ -36,13 +36,13 @@ export async function getProducts(limit = 6): Promise<{ data: Product[]; total: 
   return { data: res.data.map(mapProduct), total: res.meta?.total ?? res.data.length };
 }
 
-export async function getProjectBySlugOrId(idOrSlug: string | number): Promise<Project> {
-  const raw = await fetchSingle<RawProject>("project", idOrSlug);
+export async function getProjectById(id: string | number): Promise<Project> {
+  const raw = await fetchSingle<RawProject>("project", id);
   return mapProject(raw);
 }
 
-export async function getBlogPostBySlugOrId(idOrSlug: string | number): Promise<BlogPost> {
-  const raw = await fetchSingle<RawBlog>("blog", idOrSlug);
+export async function getBlogPostById(id: string | number): Promise<BlogPost> {
+  const raw = await fetchSingle<RawBlog>("blog", id);
   return mapBlog(raw);
 }
 

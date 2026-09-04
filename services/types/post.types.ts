@@ -37,7 +37,6 @@ export type RawProduct = RawPost<RawProductFields, { category?: string[] }>;
 
 export interface Project {
   id: number;
-  slug: string; // derived — see mapper. Replace with real CMS slug once confirmed.
   title: string;
   description: string;
   year: number;
@@ -47,7 +46,6 @@ export interface Project {
 
 export interface BlogPost {
   id: number;
-  slug: string;
   title: string;
   excerpt: string;
   publishedAt: string;
@@ -56,7 +54,6 @@ export interface BlogPost {
 
 export interface Product {
   id: number;
-  slug: string;
   name: string;
   shortDescription: string;
   price?: string;
@@ -66,19 +63,9 @@ export interface Product {
 // ---- Mappers: raw CMS post -> clean UI post ----
 // Centralizing this means if the CMS renames a field, only this file changes.
 
-function slugify(title: string, id: number): string {
-  const base = title
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
-  return `${base}-${id}`;
-}
-
 export function mapProject(raw: RawProject): Project {
   return {
     id: raw.id,
-    slug: slugify(raw.fields.title, raw.id),
     title: raw.fields.title,
     description: raw.fields.description,
     year: raw.fields.project_year,
@@ -90,7 +77,6 @@ export function mapProject(raw: RawProject): Project {
 export function mapBlog(raw: RawBlog): BlogPost {
   return {
     id: raw.id,
-    slug: slugify(raw.fields.title, raw.id),
     title: raw.fields.title,
     excerpt: raw.fields.excerpt ?? raw.fields.content?.slice(0, 160) ?? "",
     publishedAt: raw.created_at,
@@ -101,7 +87,6 @@ export function mapBlog(raw: RawBlog): BlogPost {
 export function mapProduct(raw: RawProduct): Product {
   return {
     id: raw.id,
-    slug: slugify(raw.fields.name, raw.id),
     name: raw.fields.name,
     shortDescription: raw.fields.short_description ?? "",
     price: raw.fields.price,

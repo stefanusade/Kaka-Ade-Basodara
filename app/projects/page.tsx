@@ -40,7 +40,7 @@ export default async function ProjectsPage() {
         ) : (
           <div className="mt-12 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
             {projects.map((project) => (
-              <Link key={project.id} href={`/projects/${project.slug}`}>
+              <Link key={project.id} href={`/projects/${project.id}`}>
                 <article className="group h-full overflow-hidden rounded-2xl border border-slate-200 bg-white transition-shadow hover:shadow-card">
                   <div className="relative aspect-video bg-slate-100">
                     <Image

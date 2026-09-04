@@ -16,13 +16,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ]);
 
     const projectRoutes: MetadataRoute.Sitemap = projects.map((p) => ({
-      url: `${SITE.url}/projects/${p.slug}`,
+      url: `${SITE.url}/projects/${p.id}`,
       changeFrequency: "monthly",
       priority: 0.6,
     }));
 
     const blogRoutes: MetadataRoute.Sitemap = posts.map((post) => ({
-      url: `${SITE.url}/blog/${post.slug}`,
+      url: `${SITE.url}/blog/${post.id}`,
       changeFrequency: "monthly",
       priority: 0.6,
     }));

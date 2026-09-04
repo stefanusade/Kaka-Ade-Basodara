@@ -36,7 +36,7 @@ export default function BlogInsights({
         ) : (
           <div className="mt-10 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
             {posts.map((post) => (
-              <Link key={post.id} href={`/blog/${post.slug}`}>
+              <Link key={post.id} href={`/blog/${post.id}`}>
                 <article className="group h-full overflow-hidden rounded-2xl border border-slate-200 transition-shadow hover:shadow-card">
                   <div className="relative aspect-[16/10] bg-slate-100">
                     <Image

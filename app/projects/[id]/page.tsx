@@ -1,25 +1,17 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { getProjectBySlugOrId } from "@/services/posts.service";
+import { getProjectById } from "@/services/posts.service";
 import { resolveMediaUrl } from "@/lib/media";
 import { ApiError } from "@/services/types/api.types";
 
-/**
- * IMPORTANT: this route calls fetchSingle("project", slug) which assumes
- * the CMS supports GET /api/v1/project/{slug-or-id}. This is NOT yet
- * confirmed against the live CMS — confirm the real detail endpoint shape
- * (id-based vs slug-based vs query-param) and adjust services/api-client.ts
- * fetchSingle() accordingly. Until then this page may 404 in production.
- */
-
 interface Props {
-  params: { slug: string };
+  params: { id: string };
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   try {
-    const project = await getProjectBySlugOrId(params.slug);
+    const project = await getProjectById(params.id);
     return {
       title: project.title,
       description: project.description.slice(0, 160),
@@ -31,7 +23,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function ProjectDetailPage({ params }: Props) {
   try {
-    const project = await getProjectBySlugOrId(params.slug);
+    const project = await getProjectById(params.id);
 
     return (
       <main className="px-6 pb-24 pt-32">

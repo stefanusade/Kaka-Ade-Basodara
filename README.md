@@ -11,9 +11,9 @@ situnya tetap cepat.
 
 - **Hero + Services** — intro agency dan empat lini layanan utama
 - **Projects showcase** — proyek terbaru dari CMS, lengkap dengan halaman
-  daftar (`/projects`) dan detail (`/projects/[slug]`)
+  daftar (`/projects`) dan detail (`/projects/[id]`)
 - **Blog / Insights** — artikel dari CMS, daftar (`/blog`) + detail
-  (`/blog/[slug]`)
+  (`/blog/[id]`)
 - **Newsletter form** — form email yang terhubung ke API route lokal
   (`/api/newsletter`, masih stub)
 - **SEO-ready** — metadata, Open Graph, `sitemap.xml`, `robots.txt`
@@ -63,7 +63,7 @@ Buka http://localhost:3000.
 ```
 app/                        Routes (App Router)
   layout.tsx / page.tsx      Root layout + halaman home (Hero, Services, Projects, Blog)
-  projects/ + blog/          Halaman daftar + [slug] detail
+  projects/ + blog/          Halaman daftar + [id] detail
   sitemap.ts / robots.ts     SEO
   api/newsletter/route.ts    Handler form newsletter (stub — belum ada provider)
 components/
@@ -77,7 +77,7 @@ lib/
   media.ts                   resolveMediaUrl() — path relatif CMS → URL penuh
 services/
   api-client.ts              fetchCollection() / fetchSingle() — generik, auth + ISR
-  posts.service.ts           getProjects(), getBlogPosts(), getProducts(), get*BySlugOrId()
+  posts.service.ts           getProjects(), getBlogPosts(), getProducts(), get*ById()
   types/                     Bentuk raw CMS → bentuk clean UI (mapper)
 ```
 
@@ -149,5 +149,5 @@ performa yang lebih buruk dari seharusnya.
 - Link footer semuanya mengarah ke `#`; `SITE.phone` masih placeholder.
 - `api/newsletter/route.ts` masih stub — perlu dihubungkan ke provider email
   (Mailchimp, Resend, dll.) sebelum rilis.
-- Slug saat ini diturunkan dari judul (`slugify(title, id)`) karena respons
-  CMS tidak punya field `slug`.
+- URL detail project/blog memakai ID numerik CMS (mis. `/projects/2`) karena
+  endpoint single CMS hanya menerima ID numerik, bukan slug.

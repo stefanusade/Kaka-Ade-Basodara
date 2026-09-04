@@ -1,23 +1,18 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { getBlogPostBySlugOrId } from "@/services/posts.service";
+import { getBlogPostById } from "@/services/posts.service";
 import { resolveMediaUrl } from "@/lib/media";
 import { formatDate } from "@/lib/utils";
 import { ApiError } from "@/services/types/api.types";
 
-/**
- * IMPORTANT: same caveat as app/projects/[slug]/page.tsx — confirm the real
- * single-post endpoint shape with the CMS before relying on this route.
- */
-
 interface Props {
-  params: { slug: string };
+  params: { id: string };
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   try {
-    const post = await getBlogPostBySlugOrId(params.slug);
+    const post = await getBlogPostById(params.id);
     return {
       title: post.title,
       description: post.excerpt.slice(0, 160),
@@ -29,7 +24,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function BlogDetailPage({ params }: Props) {
   try {
-    const post = await getBlogPostBySlugOrId(params.slug);
+    const post = await getBlogPostById(params.id);
 
     return (
       <main className="px-6 pb-24 pt-32">
