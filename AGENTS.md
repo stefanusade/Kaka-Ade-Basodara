@@ -65,8 +65,9 @@ services/
   `Promise.allSettled` so one failing section never breaks the page.
 - Fetch results are cached via ISR (`revalidate: 3600` default) with
   request tags (`projects`, `blog`, `products`) for on-demand revalidation.
-- Only three client components: `FadeIn`, `MobileNav`, `NewsletterForm`.
-  Keep it that way — everything else should stay a server component.
+- Only four client components: `FadeIn`, `MobileNav`, `NewsletterForm`,
+  `ThemeToggle`. Keep it that way — everything else should stay a server
+  component.
 
 ## CMS integration (verified against the live CMS)
 
@@ -94,6 +95,19 @@ services/
   URLs use the CMS numeric id, not a slug.
 - **Styling**: Tailwind with theme tokens (`brand`, `ink`) from
   `tailwind.config.ts`; combine classes with `cn()` from `lib/utils`.
+- **Tema (light/dark/device)**: preferensi disimpan di `localStorage` dengan
+  key `kab-theme` (`light` | `dark` | `system`); kelas `dark` dipasang pada
+  `<html>`. `lib/theme.ts` berisi `THEME_INIT_SCRIPT` (disuntik di `<head>`
+  pada `app/layout.tsx` — **wajib**, kalau tidak ada flash tema salah), plus
+  `applyTheme()`/`readStoredTheme()`. UI-nya `components/theme/ThemeToggle.tsx`
+  (3 opsi, dipasang di `Header` desktop dan panel `MobileNav`); beberapa
+  instance disinkronkan lewat event `kab-theme-change`.
+- **Konvensi tema**: mode **terang = desain asli** (hero, header, footer tetap
+  gelap), mode **gelap** membuat section konten ikut gelap. Setiap permukaan
+  terang wajib diberi varian `dark:` (contoh: `bg-white dark:bg-slate-900`,
+  `text-slate-900 dark:text-slate-100`, `border-slate-200 dark:border-slate-800`,
+  aksen `text-blue-600 dark:text-blue-400`). Halaman dalam (daftar/detail
+  `projects` & `blog`) belum dipasangi varian gelap.
 - **Images**: `next/image` with `fill` + `sizes` for responsive lazy loading.
 - **Dates**: format via `formatDate()` (`id-ID` locale).
 

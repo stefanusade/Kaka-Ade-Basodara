@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import ThemeToggle from "@/components/theme/ThemeToggle";
 import MobileNav from "./MobileNav";
 import { NAV_LINKS, SITE } from "@/lib/constants";
 
@@ -23,7 +24,8 @@ export default function Header() {
           ))}
         </nav>
 
-        <div className="hidden md:block">
+        <div className="hidden items-center gap-3 md:flex">
+          <ThemeToggle />
           <Button asChild size="sm">
             <Link href="/contact">Get Started</Link>
           </Button>

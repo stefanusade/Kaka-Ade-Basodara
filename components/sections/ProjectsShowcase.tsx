@@ -12,13 +12,13 @@ export default function ProjectsShowcase({
   error: string | null;
 }) {
   return (
-    <section id="projects" aria-labelledby="projects-heading" className="bg-slate-50 px-6 py-24">
+    <section id="projects" aria-labelledby="projects-heading" className="bg-slate-50 px-6 py-24 dark:bg-slate-950">
       <div className="mx-auto max-w-6xl">
         <div className="flex items-end justify-between">
-          <h2 id="projects-heading" className="text-3xl font-bold text-slate-900 sm:text-4xl">
+          <h2 id="projects-heading" className="text-3xl font-bold text-slate-900 sm:text-4xl dark:text-slate-100">
             Recent Work
           </h2>
-          <Link href="/projects" className="text-sm font-medium text-blue-600 hover:underline">
+          <Link href="/projects" className="text-sm font-medium text-blue-600 hover:underline dark:text-blue-400">
             View all →
           </Link>
         </div>
@@ -26,15 +26,15 @@ export default function ProjectsShowcase({
         {error ? (
           <ErrorState message={error} />
         ) : projects.length === 0 ? (
-          <p className="mt-10 text-slate-500">No projects published yet.</p>
+          <p className="mt-10 text-slate-500 dark:text-slate-400">No projects published yet.</p>
         ) : (
           <div className="mt-10 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
             {projects.map((project) => (
               <article
                 key={project.id}
-                className="overflow-hidden rounded-2xl border border-slate-200 bg-white"
+                className="overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
               >
-                <div className="relative aspect-video bg-slate-100">
+                <div className="relative aspect-video bg-slate-100 dark:bg-slate-800">
                   <Image
                     src={resolveMediaUrl(project.image)}
                     alt={project.title}
@@ -44,11 +44,11 @@ export default function ProjectsShowcase({
                   />
                 </div>
                 <div className="p-5">
-                  <span className="text-xs font-medium uppercase tracking-wide text-blue-600">
+                  <span className="text-xs font-medium uppercase tracking-wide text-blue-600 dark:text-blue-400">
                     {project.category} · {project.year}
                   </span>
-                  <h3 className="mt-2 font-semibold text-slate-900">{project.title}</h3>
-                  <p className="mt-1 text-sm text-slate-600 line-clamp-2">
+                  <h3 className="mt-2 font-semibold text-slate-900 dark:text-slate-100">{project.title}</h3>
+                  <p className="mt-1 text-sm text-slate-600 line-clamp-2 dark:text-slate-400">
                     {project.description}
                   </p>
                 </div>

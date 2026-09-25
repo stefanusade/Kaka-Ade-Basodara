@@ -4,6 +4,12 @@
 
 html {
   scroll-behavior: smooth;
+  /* Kontrol native (scrollbar, form) mengikuti tema aktif */
+  color-scheme: light;
+}
+
+html.dark {
+  color-scheme: dark;
 }
 
 body {

@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import ThemeToggle from "@/components/theme/ThemeToggle";
 
 export default function MobileNav({
   links,
@@ -41,6 +42,11 @@ export default function MobileNav({
                 Get Started
               </Link>
             </Button>
+
+            <div className="mt-2 flex items-center justify-between border-t border-white/10 pt-4">
+              <span className="text-sm font-medium text-slate-300">Tema tampilan</span>
+              <ThemeToggle />
+            </div>
           </nav>
         </div>
       )}
