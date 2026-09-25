@@ -1,14 +1,17 @@
 import { fetchCollection, fetchSingle } from "./api-client";
-import { mapProject, mapBlog, mapProduct, mapContact } from "./types/post.types";
+import { mapProject, mapBlog, mapProduct, mapContact, mapService } from "./types/post.types";
 import type {
   RawProject,
   RawBlog,
   RawProduct,
   RawInformation,
+  RawService,
   Project,
   BlogPost,
   Product,
   ContactInfo,
+  Service,
+  ServiceGroup,
 } from "./types/post.types";
 
 // Adding a new post type later = one function like these, ~5 lines.
@@ -63,6 +66,44 @@ export async function getContactInfo(): Promise<ContactInfo[]> {
   return res.data
     .filter((item) => (item.terms?.category ?? []).includes(CONTACT_TERM))
     .map(mapContact);
+}
+
+/** Term pengganti untuk layanan yang belum diberi term pada taxonomy `type`. */
+const OTHER_SERVICE_TYPE = "lainnya";
+
+/**
+ * Layanan dari post type `service`, dikelompokkan per term taxonomy `type`
+ * supaya tiap grup bisa dirender sebagai satu section di halaman Services.
+ *
+ * Section diurutkan alfabetis berdasarkan slug term (bukan urutan terbit item,
+ * yang sulit dikendalikan penyunting); grup "lainnya" selalu diletakkan terakhir.
+ */
+export async function getServiceGroups(): Promise<ServiceGroup[]> {
+  const res = await fetchCollection<RawService>("service", {
+    params: { per_page: 100 },
+    tags: ["services"],
+  });
+
+  const groups = new Map<string, Service[]>();
+
+  res.data.forEach((raw) => {
+    const service = mapService(raw);
+    const type = service.type ?? OTHER_SERVICE_TYPE;
+    const bucket = groups.get(type);
+
+    if (bucket) bucket.push(service);
+    else groups.set(type, [service]);
+  });
+
+  const sorted = [...groups]
+    .filter(([type]) => type !== OTHER_SERVICE_TYPE)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([type, services]) => ({ type, services }));
+
+  const others = groups.get(OTHER_SERVICE_TYPE);
+  if (others) sorted.push({ type: OTHER_SERVICE_TYPE, services: others });
+
+  return sorted;
 }
 
 export async function getBlogPostById(id: string | number): Promise<BlogPost> {

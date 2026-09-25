@@ -42,6 +42,7 @@ Env vars are read at server startup — restart `npm run dev` after changes.
 app/                        Routes (App Router)
   layout.tsx / page.tsx      Root layout + home (Hero, Services, Projects, Blog)
   projects/ + blog/          List + [id] detail pages
+  services/                  Services page (satu section per term taxonomy `type`)
   contact/                   Contact page (data dari post type `information`)
   sitemap.ts / robots.ts     SEO
   api/newsletter/route.ts    Newsletter stub (no provider wired yet)
@@ -90,6 +91,11 @@ services/
   `mapContact()` menurunkan tipe tautan dari isi value + kata kunci label
   (WhatsApp → `wa.me`, email → `mailto:`, sisanya `tel:`/URL/teks biasa), karena
   CMS tidak menyimpan jenis kontak secara eksplisit.
+- **`service`** (2 entri saat ini: Basic/hosting & B2B IoT) memakai
+  `fields: { title, description, pricing, popular }` dan dikelompokkan lewat
+  term taxonomy `type` (mis. `hosting`, `iot`). `description` bisa memuat HTML
+  (daftar fitur), jadi dirender sebagai rich text di `app/services/page.tsx`
+  lewat `dangerouslySetInnerHTML` (konten ditulis penyunting situs sendiri).
 
 ## Conventions
 
@@ -98,7 +104,8 @@ services/
 - **Adding a new post type** (e.g. `testimonial`): add raw/clean types + a
   mapper in `post.types.ts`, then a ~5-line wrapper in `posts.service.ts`.
   `api-client.ts` needs no changes. Kalau post type-nya butuh API key, tambahkan
-  namanya ke `AUTH_REQUIRED_TYPES` di `api.types.ts`.
+  namanya ke `AUTH_REQUIRED_TYPES` di `api.types.ts`. Kalau perlu dikelompokkan
+  per term, tiru `getServiceGroups()`.
 - **CMS tidak mendukung filter taxonomy lewat query string**: parameter seperti
   `category=`, `term=`, atau `filter[...]=` diabaikan server (diverifikasi: term
   yang tidak ada tetap mengembalikan semua item). Filter term dilakukan di

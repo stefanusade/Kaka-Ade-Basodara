@@ -42,6 +42,18 @@ export interface RawInformationFields {
 
 export type RawInformation = RawPost<RawInformationFields, { category?: string[] }>;
 
+// Post type "service" — layanan dikelompokkan lewat term taxonomy "type"
+// (mis. "hosting", "iot"). Diverifikasi terhadap CMS live: fields { title,
+// description, pricing, popular }. `description` bisa berisi HTML (daftar fitur).
+export interface RawServiceFields {
+  title: string;
+  description: string;
+  pricing: string;
+  popular: boolean;
+}
+
+export type RawService = RawPost<RawServiceFields, { type?: string[] }>;
+
 // ---- Clean shapes used by UI components (decoupled from CMS field naming) ----
 
 export interface Project {
@@ -78,6 +90,24 @@ export interface ContactInfo {
   kind: ContactKind;
   /** Tautan siap klik (mailto:, tel:, wa.me, atau URL) — null bila bukan tautan. */
   href: string | null;
+}
+
+export interface Service {
+  id: number;
+  title: string;
+  /** Bisa berupa HTML (daftar fitur) — dirender sebagai rich text di halaman. */
+  description: string;
+  /** Label biaya apa adanya dari CMS, mis. "300K/year" atau "Contact Us". */
+  pricing: string;
+  popular: boolean;
+  /** Term pertama taxonomy `type` (mis. "hosting"), null bila tidak diberi term. */
+  type: string | null;
+}
+
+export interface ServiceGroup {
+  /** Slug term taxonomy `type`; "lainnya" untuk layanan tanpa term. */
+  type: string;
+  services: Service[];
 }
 
 // ---- Mappers: raw CMS post -> clean UI post ----
@@ -153,4 +183,15 @@ export function mapContact(raw: RawInformation): ContactInfo {
   const value = raw.fields.value ?? "";
 
   return { id: raw.id, label, value, ...toContactLink(label, value) };
+}
+
+export function mapService(raw: RawService): Service {
+  return {
+    id: raw.id,
+    title: raw.fields.title,
+    description: raw.fields.description ?? "",
+    pricing: raw.fields.pricing ?? "",
+    popular: Boolean(raw.fields.popular),
+    type: raw.terms?.type?.[0] ?? null,
+  };
 }

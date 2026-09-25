@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Server, Code2, Cpu, Palette } from "lucide-react";
 import FadeIn from "@/components/common/FadeIn";
 
@@ -35,6 +36,12 @@ export default function Services() {
           <p className="mt-4 text-slate-600 dark:text-slate-400">
             Four core disciplines, one accountable partner.
           </p>
+          <Link
+            href="/services"
+            className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:underline dark:text-blue-400"
+          >
+            View all services <span aria-hidden>→</span>
+          </Link>
         </div>
         <div className="mt-16 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {services.map((service, i) => (
