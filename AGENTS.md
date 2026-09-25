@@ -42,6 +42,7 @@ Env vars are read at server startup — restart `npm run dev` after changes.
 app/                        Routes (App Router)
   layout.tsx / page.tsx      Root layout + home (Hero, Services, Projects, Blog)
   projects/ + blog/          List + [id] detail pages
+  contact/                   Contact page (data dari post type `information`)
   sitemap.ts / robots.ts     SEO
   api/newsletter/route.ts    Newsletter stub (no provider wired yet)
 components/
@@ -82,6 +83,12 @@ services/
 - **Current CMS state**: `blog` has **0 posts** (sections show "No articles
   published yet" — expected, not a bug). The `product` content type does
   **not exist** on the CMS (404); `getProducts()` is unused until it does.
+- **`information`** (2 entri saat ini: WhatsApp & email) memakai
+  `fields: { label, value }` dan menandai tipe kontaknya lewat term `contact`
+  pada taxonomy `category`.
+  `mapContact()` menurunkan tipe tautan dari isi value + kata kunci label
+  (WhatsApp → `wa.me`, email → `mailto:`, sisanya `tel:`/URL/teks biasa), karena
+  CMS tidak menyimpan jenis kontak secara eksplisit.
 
 ## Conventions
 
@@ -89,7 +96,12 @@ services/
   If the CMS renames a field, only that file changes.
 - **Adding a new post type** (e.g. `testimonial`): add raw/clean types + a
   mapper in `post.types.ts`, then a ~5-line wrapper in `posts.service.ts`.
-  `api-client.ts` needs no changes.
+  `api-client.ts` needs no changes. Kalau post type-nya butuh API key, tambahkan
+  namanya ke `AUTH_REQUIRED_TYPES` di `api.types.ts`.
+- **CMS tidak mendukung filter taxonomy lewat query string**: parameter seperti
+  `category=`, `term=`, atau `filter[...]=` diabaikan server (diverifikasi: term
+  yang tidak ada tetap mengembalikan semua item). Filter term dilakukan di
+  service layer, contohnya `getContactInfo()` yang menyaring term `contact`.
 - **Detail routes are id-based** (`/projects/[id]`, `/blog/[id]`) — the CMS
   single-item endpoint only accepts numeric ids (`GET /{postType}/{id}`), so
   URLs use the CMS numeric id, not a slug.
@@ -113,9 +125,15 @@ services/
 
 ## Known gaps / pitfalls
 
-- `/contact` is linked from the header CTA, hero, and mobile nav but the
-  route does **not exist yet** — it 404s. Build it or remove the links.
-- Footer links all point to `#`; `SITE.phone` is a placeholder.
+- ~~`/contact` is linked from the header CTA, hero, and mobile nav but the
+  route does **not exist yet** — it 404s.~~ Sudah dibuat: `app/contact/page.tsx`
+  membaca kontak dari post type `information` (term `contact`), dan
+  `NAV_LINKS` sudah diarahkan ke `/contact` (sebelumnya anchor `/#contact`
+  yang tidak ada section-nya). Halaman ini belum punya form kontak —
+  kanal yang tersedia berasal dari CMS.
+- Footer links all point to `#`; `SITE.phone` is a placeholder. Kontak asli
+  (WhatsApp & email) ada di CMS lewat `getContactInfo()` — footer masih memakai
+  `SITE.email`/`SITE.phone`.
 - `api/newsletter/route.ts` is a stub — wire it to a real email provider
   before launch.
 - 404 from the CMS renders "No content published yet"; other failures render

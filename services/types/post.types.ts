@@ -33,6 +33,15 @@ export interface RawProductFields {
 
 export type RawProduct = RawPost<RawProductFields, { category?: string[] }>;
 
+// Post type "information" — daftar kontak ada di sini, ditandai term "contact"
+// pada taxonomy "category". Diverifikasi terhadap CMS live: fields { label, value }.
+export interface RawInformationFields {
+  label: string;
+  value: string;
+}
+
+export type RawInformation = RawPost<RawInformationFields, { category?: string[] }>;
+
 // ---- Clean shapes used by UI components (decoupled from CMS field naming) ----
 
 export interface Project {
@@ -58,6 +67,17 @@ export interface Product {
   shortDescription: string;
   price?: string;
   image: string | null;
+}
+
+export type ContactKind = "email" | "whatsapp" | "phone" | "link" | "text";
+
+export interface ContactInfo {
+  id: number;
+  label: string;
+  value: string;
+  kind: ContactKind;
+  /** Tautan siap klik (mailto:, tel:, wa.me, atau URL) — null bila bukan tautan. */
+  href: string | null;
 }
 
 // ---- Mappers: raw CMS post -> clean UI post ----
@@ -92,4 +112,45 @@ export function mapProduct(raw: RawProduct): Product {
     price: raw.fields.price,
     image: raw.fields.featured_image,
   };
+}
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PHONE_PATTERN = /^[\d\s()+-]+$/;
+
+/** Normalisasi nomor Indonesia: 0858… → 62858… (dipakai untuk wa.me dan tel). */
+function normalizePhone(value: string): string {
+  const digits = value.replace(/\D/g, "");
+  return digits.startsWith("0") ? `62${digits.slice(1)}` : digits;
+}
+
+/**
+ * Ubah label + value dari CMS menjadi tautan yang bisa diklik.
+ * CMS tidak menyimpan tipe kontak, jadi label yang membedakan WhatsApp dari
+ * telepon biasa (mis. "Whatsapp (Text Only)" vs "Phone").
+ */
+export function toContactLink(label: string, value: string): Pick<ContactInfo, "kind" | "href"> {
+  const trimmed = value.trim();
+
+  if (!trimmed) return { kind: "text", href: null };
+  if (EMAIL_PATTERN.test(trimmed)) return { kind: "email", href: `mailto:${trimmed}` };
+  if (/^https?:\/\//i.test(trimmed)) return { kind: "link", href: trimmed };
+
+  if (PHONE_PATTERN.test(trimmed)) {
+    const phone = normalizePhone(trimmed);
+    if (phone.length >= 8) {
+      const isWhatsApp = /whats?app|\bwa\b/i.test(label);
+      return isWhatsApp
+        ? { kind: "whatsapp", href: `https://wa.me/${phone}` }
+        : { kind: "phone", href: `tel:+${phone}` };
+    }
+  }
+
+  return { kind: "text", href: null };
+}
+
+export function mapContact(raw: RawInformation): ContactInfo {
+  const label = raw.fields.label ?? "";
+  const value = raw.fields.value ?? "";
+
+  return { id: raw.id, label, value, ...toContactLink(label, value) };
 }

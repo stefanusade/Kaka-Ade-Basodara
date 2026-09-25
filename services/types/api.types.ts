@@ -21,7 +21,7 @@ export class ApiError extends Error {
 }
 
 // Post types that require an authenticated API key
-export const AUTH_REQUIRED_TYPES = ["project", "blog", "product"] as const;
+export const AUTH_REQUIRED_TYPES = ["project", "blog", "product", "information"] as const;
 export type PostType = (typeof AUTH_REQUIRED_TYPES)[number] | "testimonial" | "team";
 
 // Raw shape as returned by the CMS for any post type — generic over `fields`/`terms`
