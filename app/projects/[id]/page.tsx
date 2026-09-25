@@ -3,6 +3,7 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { getProjectById } from "@/services/posts.service";
 import { resolveMediaUrl } from "@/lib/media";
+import PageHero from "@/components/common/PageHero";
 import { ApiError } from "@/services/types/api.types";
 
 interface Props {
@@ -26,26 +27,27 @@ export default async function ProjectDetailPage({ params }: Props) {
     const project = await getProjectById(params.id);
 
     return (
-      <main className="px-6 pb-24 pt-32">
-        <article className="mx-auto max-w-3xl">
-          <span className="text-xs font-medium uppercase tracking-wide text-blue-600">
-            {project.category} · {project.year}
-          </span>
-          <h1 className="mt-2 text-4xl font-bold text-slate-900">{project.title}</h1>
+      <main>
+        <PageHero eyebrow={`${project.category} · ${project.year}`} title={project.title} />
 
-          <div className="relative mt-8 aspect-video overflow-hidden rounded-2xl bg-slate-100">
-            <Image
-              src={resolveMediaUrl(project.image)}
-              alt={project.title}
-              fill
-              sizes="768px"
-              className="object-cover"
-              priority
-            />
-          </div>
+        <div className="px-6 py-16 sm:py-20">
+          <article className="mx-auto max-w-3xl">
+            <div className="relative aspect-video overflow-hidden rounded-2xl bg-slate-100 dark:bg-slate-800">
+              <Image
+                src={resolveMediaUrl(project.image)}
+                alt={project.title}
+                fill
+                sizes="768px"
+                className="object-cover"
+                priority
+              />
+            </div>
 
-          <p className="mt-8 text-slate-700 leading-relaxed">{project.description}</p>
-        </article>
+            <p className="mt-8 leading-relaxed text-slate-700 dark:text-slate-300">
+              {project.description}
+            </p>
+          </article>
+        </div>
       </main>
     );
   } catch (e) {

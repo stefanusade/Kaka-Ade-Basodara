@@ -5,6 +5,7 @@ import { ApiError } from "@/services/types/api.types";
 import type { ContactInfo, ContactKind } from "@/services/types/post.types";
 import ErrorState from "@/components/common/ErrorState";
 import FadeIn from "@/components/common/FadeIn";
+import PageHero from "@/components/common/PageHero";
 
 export const metadata: Metadata = {
   title: "Contact",
@@ -43,61 +44,63 @@ export default async function ContactPage() {
   }
 
   return (
-    <main className="px-6 pb-24 pt-32">
-      <div className="mx-auto max-w-6xl">
-        <h1 className="text-4xl font-bold text-slate-900 dark:text-slate-100">Let&apos;s Talk</h1>
-        <p className="mt-3 max-w-2xl text-slate-600 dark:text-slate-400">
-          Tell us about your project — hosting, web development, B2B IoT, or branding. Pick whichever
-          channel you prefer; we usually reply within one business day.
-        </p>
+    <main>
+      <PageHero
+        eyebrow="Contact"
+        title="Let's Talk"
+        description="Tell us about your project — hosting, web development, B2B IoT, or branding. Pick whichever channel you prefer; we usually reply within one business day."
+      />
 
-        {error ? (
-          <ErrorState message={error} />
-        ) : contacts.length === 0 ? (
-          <p className="mt-10 text-slate-500 dark:text-slate-400">
-            No contact channels published yet.
-          </p>
-        ) : (
-          <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2">
-            {contacts.map((contact, i) => {
-              const Icon = iconForContact(contact);
-              const isExternal = contact.kind === "whatsapp" || contact.kind === "link";
+      <div className="px-6 py-16 sm:py-20">
+        <div className="mx-auto max-w-6xl">
+          {error ? (
+            <ErrorState message={error} />
+          ) : contacts.length === 0 ? (
+            <p className="text-slate-500 dark:text-slate-400">
+              No contact channels published yet.
+            </p>
+          ) : (
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+              {contacts.map((contact, i) => {
+                const Icon = iconForContact(contact);
+                const isExternal = contact.kind === "whatsapp" || contact.kind === "link";
 
-              const card = (
-                <>
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400">
-                    <Icon className="h-5 w-5" aria-hidden />
-                  </span>
-                  <span className="min-w-0">
-                    <span className="block text-sm font-medium text-slate-500 dark:text-slate-400">
-                      {contact.label}
+                const card = (
+                  <>
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400">
+                      <Icon className="h-5 w-5" aria-hidden />
                     </span>
-                    <span className="mt-1 block break-words font-semibold text-slate-900 group-hover:text-blue-600 dark:text-slate-100 dark:group-hover:text-blue-400">
-                      {contact.value}
+                    <span className="min-w-0">
+                      <span className="block text-sm font-medium text-slate-500 dark:text-slate-400">
+                        {contact.label}
+                      </span>
+                      <span className="mt-1 block break-words font-semibold text-slate-900 group-hover:text-blue-600 dark:text-slate-100 dark:group-hover:text-blue-400">
+                        {contact.value}
+                      </span>
                     </span>
-                  </span>
-                </>
-              );
+                  </>
+                );
 
-              return (
-                <FadeIn key={contact.id} delay={i * 0.08}>
-                  {contact.href ? (
-                    <a
-                      href={contact.href}
-                      target={isExternal ? "_blank" : undefined}
-                      rel={isExternal ? "noopener noreferrer" : undefined}
-                      className={`${CARD_CLASS} hover:border-blue-300 dark:hover:border-blue-500/40`}
-                    >
-                      {card}
-                    </a>
-                  ) : (
-                    <div className={CARD_CLASS}>{card}</div>
-                  )}
-                </FadeIn>
-              );
-            })}
-          </div>
-        )}
+                return (
+                  <FadeIn key={contact.id} delay={i * 0.08}>
+                    {contact.href ? (
+                      <a
+                        href={contact.href}
+                        target={isExternal ? "_blank" : undefined}
+                        rel={isExternal ? "noopener noreferrer" : undefined}
+                        className={`${CARD_CLASS} hover:border-blue-300 dark:hover:border-blue-500/40`}
+                      >
+                        {card}
+                      </a>
+                    ) : (
+                      <div className={CARD_CLASS}>{card}</div>
+                    )}
+                  </FadeIn>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
     </main>
   );

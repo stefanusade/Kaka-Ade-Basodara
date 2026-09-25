@@ -49,14 +49,15 @@ components/
   ui/button.tsx              shadcn-style primitive
   layout/                    Header, Footer, MobileNav
   sections/                  Hero, Services, ProjectsShowcase, BlogInsights, NewsletterForm
-  common/                    FadeIn, ErrorState, SectionHeading
+  common/                    FadeIn, ErrorState, SectionHeading, PageHero
 lib/
   constants.ts               SITE info, nav links, footer links
   utils.ts                   cn(), formatDate()
+  theme.ts                   THEME_INIT_SCRIPT + applyTheme()/readStoredTheme()
   media.ts                   resolveMediaUrl() — relative CMS path → full URL
 services/
   api-client.ts              fetchCollection() / fetchSingle() — generic, auth + ISR
-  posts.service.ts           getProjects(), getBlogPosts(), getProducts(), get*ById()
+  posts.service.ts           getProjects(), getBlogPosts(), getContactInfo(), get*ById()
   types/                     Raw CMS shapes → clean UI shapes (mappers)
 ```
 
@@ -118,8 +119,13 @@ services/
   gelap), mode **gelap** membuat section konten ikut gelap. Setiap permukaan
   terang wajib diberi varian `dark:` (contoh: `bg-white dark:bg-slate-900`,
   `text-slate-900 dark:text-slate-100`, `border-slate-200 dark:border-slate-800`,
-  aksen `text-blue-600 dark:text-blue-400`). Halaman dalam (daftar/detail
-  `projects` & `blog`) belum dipasangi varian gelap.
+  aksen `text-blue-600 dark:text-blue-400`).
+- **Hero tiap halaman**: halaman publik dibuka dengan band gelap — beranda pakai
+  `sections/Hero.tsx` (terpusat), halaman lain pakai `common/PageHero.tsx`
+  (kiri, prop `eyebrow`/`title`/`description`). PageHero sengaja selalu gelap di
+  kedua mode, jadi **tidak perlu** varian `dark:`. Konten di bawahnya dibungkus
+  `<div className="px-6 py-16 sm:py-20">` (bukan `pt-32` — padding atas sudah
+  ditangani hero).
 - **Images**: `next/image` with `fill` + `sizes` for responsive lazy loading.
 - **Dates**: format via `formatDate()` (`id-ID` locale).
 

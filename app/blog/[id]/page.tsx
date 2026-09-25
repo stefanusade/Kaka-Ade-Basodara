@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { getBlogPostById } from "@/services/posts.service";
 import { resolveMediaUrl } from "@/lib/media";
 import { formatDate } from "@/lib/utils";
+import PageHero from "@/components/common/PageHero";
 import { ApiError } from "@/services/types/api.types";
 
 interface Props {
@@ -27,26 +28,25 @@ export default async function BlogDetailPage({ params }: Props) {
     const post = await getBlogPostById(params.id);
 
     return (
-      <main className="px-6 pb-24 pt-32">
-        <article className="mx-auto max-w-3xl">
-          <time dateTime={post.publishedAt} className="text-xs font-medium uppercase tracking-wide text-slate-400">
-            {formatDate(post.publishedAt)}
-          </time>
-          <h1 className="mt-2 text-4xl font-bold text-slate-900">{post.title}</h1>
+      <main>
+        <PageHero eyebrow={formatDate(post.publishedAt)} title={post.title} />
 
-          <div className="relative mt-8 aspect-[16/9] overflow-hidden rounded-2xl bg-slate-100">
-            <Image
-              src={resolveMediaUrl(post.image)}
-              alt={post.title}
-              fill
-              sizes="768px"
-              className="object-cover"
-              priority
-            />
-          </div>
+        <div className="px-6 py-16 sm:py-20">
+          <article className="mx-auto max-w-3xl">
+            <div className="relative aspect-[16/9] overflow-hidden rounded-2xl bg-slate-100 dark:bg-slate-800">
+              <Image
+                src={resolveMediaUrl(post.image)}
+                alt={post.title}
+                fill
+                sizes="768px"
+                className="object-cover"
+                priority
+              />
+            </div>
 
-          <p className="mt-8 text-slate-700 leading-relaxed">{post.excerpt}</p>
-        </article>
+            <p className="mt-8 leading-relaxed text-slate-700 dark:text-slate-300">{post.excerpt}</p>
+          </article>
+        </div>
       </main>
     );
   } catch (e) {
