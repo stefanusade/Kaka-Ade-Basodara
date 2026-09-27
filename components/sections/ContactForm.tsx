@@ -1,10 +1,14 @@
 "use client";
 
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
+import { ALLOWED_ATTACHMENT_EXTENSIONS, ATTACHMENT_MAX_BYTES } from "@/lib/sanitize";
 
 const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? "";
 const TURNSTILE_SCRIPT = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+
+const MAX_ATTACHMENT_MB = Math.round(ATTACHMENT_MAX_BYTES / (1024 * 1024));
+const ACCEPT_ATTRIBUTE = ALLOWED_ATTACHMENT_EXTENSIONS.map((extension) => `.${extension}`).join(",");
 
 declare global {
   interface Window {
@@ -47,6 +51,7 @@ const LABEL_CLASS = "block text-sm font-medium text-slate-700 dark:text-slate-30
 export default function ContactForm() {
   const [status, setStatus] = useState<"idle" | "sending" | "success" | "error">("idle");
   const [feedback, setFeedback] = useState("");
+  const [fileError, setFileError] = useState("");
 
   const containerRef = useRef<HTMLDivElement>(null);
   const widgetId = useRef<string | null>(null);
@@ -80,6 +85,28 @@ export default function ContactForm() {
     }
   }
 
+  /** Cek awal di klien supaya pengguna tidak menunggu unggahan yang akan gagal. */
+  function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
+    setFileError("");
+
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > ATTACHMENT_MAX_BYTES) {
+      setFileError(`The attachment is too large (max ${MAX_ATTACHMENT_MB} MB).`);
+      event.target.value = "";
+      return;
+    }
+
+    const extension = (file.name.split(".").pop() ?? "").toLowerCase();
+    if (!ALLOWED_ATTACHMENT_EXTENSIONS.includes(extension)) {
+      setFileError(
+        `File type not allowed. Allowed types: ${ALLOWED_ATTACHMENT_EXTENSIONS.join(", ")}.`
+      );
+      event.target.value = "";
+    }
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -97,22 +124,19 @@ export default function ContactForm() {
       return;
     }
 
+    if (fileError) {
+      setStatus("error");
+      setFeedback(fileError);
+      return;
+    }
+
+    data.set("token", token);
     setStatus("sending");
     setFeedback("");
 
     try {
-      const res = await fetch("/api/contact", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: data.get("name"),
-          email: data.get("email"),
-          subject: data.get("subject"),
-          message: data.get("message"),
-          website: data.get("website"),
-          token,
-        }),
-      });
+      // multipart/form-data: browser mengisi boundary-nya sendiri
+      const res = await fetch("/api/contact", { method: "POST", body: data });
 
       const payload = (await res.json().catch(() => null)) as
         | { success?: boolean; message?: string }
@@ -120,6 +144,7 @@ export default function ContactForm() {
 
       if (res.ok && payload?.success) {
         form.reset();
+        setFileError("");
         resetWidget();
         setStatus("success");
         setFeedback(payload.message ?? "Thanks! Your message has been sent.");
@@ -206,6 +231,28 @@ export default function ContactForm() {
       <div aria-hidden className="hidden">
         <label htmlFor="contact-website">Website</label>
         <input id="contact-website" name="website" type="text" tabIndex={-1} autoComplete="off" />
+      </div>
+
+      <div>
+        <label htmlFor="contact-attachment" className={LABEL_CLASS}>
+          Attachment <span className="text-slate-400 dark:text-slate-500">(optional)</span>
+        </label>
+        <input
+          id="contact-attachment"
+          name="attachment"
+          type="file"
+          accept={ACCEPT_ATTRIBUTE}
+          onChange={handleFileChange}
+          className="mt-2 block w-full cursor-pointer rounded-lg border border-slate-300 bg-white text-sm text-slate-600 file:mr-4 file:cursor-pointer file:border-0 file:bg-slate-100 file:px-4 file:py-2.5 file:text-sm file:font-medium file:text-slate-700 hover:file:bg-slate-200 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300 dark:file:bg-slate-800 dark:file:text-slate-200 dark:hover:file:bg-slate-700"
+        />
+        <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+          Max {MAX_ATTACHMENT_MB} MB · {ALLOWED_ATTACHMENT_EXTENSIONS.join(", ")}
+        </p>
+        {fileError && (
+          <p role="alert" className="mt-2 text-xs text-red-600 dark:text-red-400">
+            {fileError}
+          </p>
+        )}
       </div>
 
       {TURNSTILE_SITE_KEY && <div ref={containerRef} />}

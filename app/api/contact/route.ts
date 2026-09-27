@@ -5,14 +5,17 @@ import {
   sanitizeEmail,
   sanitizeMultiline,
   sanitizeText,
+  validateAttachment,
 } from "@/lib/sanitize";
 
 /**
  * Terima pesan dari form kontak, bersihkan, verifikasi Cloudflare Turnstile,
- * lalu simpan ke CMS (content type `contact-form`).
+ * unggah lampiran (opsional) ke CMS, lalu simpan entri ke content type
+ * `contact-form`.
  *
- * API key CMS hanya dipakai di server (CMS_CONTACT_API_KEY) — key ini
- * read/write KHUSUS content type `contact-form`, bukan key konten lain.
+ * API key CMS (CMS_CONTACT_API_KEY) hanya dipakai di server. Key ini
+ * read/write KHUSUS `contact-form` + endpoint media — key konten lain tidak
+ * punya scope untuk media.
  */
 
 const CMS_BASE_URL = process.env.CMS_BASE_URL ?? "https://cms.kakaadebasodara.com/api/v1";
@@ -21,6 +24,7 @@ const TURNSTILE_SECRET_KEY = process.env.TURNSTILE_SECRET_KEY ?? "";
 
 const RATE_LIMIT_MAX = 5;
 const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
+const SUCCESS_MESSAGE = "Thanks! Your message has been sent.";
 
 /** Rate limit per IP, per instance (cukup untuk meredam spam dasar). */
 const recentRequests = new Map<string, number[]>();
@@ -66,6 +70,68 @@ async function verifyTurnstile(token: string, ip: string): Promise<boolean> {
   }
 }
 
+/** Terima multipart/form-data (form + lampiran) maupun JSON (tanpa lampiran). */
+async function readPayload(
+  request: Request
+): Promise<{ fields: Record<string, unknown>; attachment: File | null } | null> {
+  const contentType = request.headers.get("content-type") ?? "";
+
+  if (contentType.includes("multipart/form-data")) {
+    const form = await request.formData().catch(() => null);
+    if (!form) return null;
+
+    const file = form.get("attachment");
+    return {
+      fields: Object.fromEntries(
+        [...form.entries()].filter(([, value]) => typeof value === "string")
+      ),
+      attachment: file instanceof File && file.size > 0 ? file : null,
+    };
+  }
+
+  const body = (await request.json().catch(() => null)) as Record<string, unknown> | null;
+  return body ? { fields: body, attachment: null } : null;
+}
+
+/** Unggah lampiran ke CMS, kembalikan `path` untuk field `attachment`. */
+async function uploadAttachment(file: File): Promise<{ path: string } | { error: string }> {
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const checked = validateAttachment({ name: file.name, size: file.size, bytes });
+
+  if (!checked.ok) return { error: checked.message };
+
+  const form = new FormData();
+  // Content-Type tidak di-set manual — runtime mengisi boundary-nya sendiri
+  form.append("file", new Blob([bytes], { type: checked.mime }), checked.filename);
+
+  try {
+    const res = await fetch(`${CMS_BASE_URL}/media`, {
+      method: "POST",
+      headers: { "X-API-Key": CONTACT_API_KEY },
+      body: form,
+      signal: AbortSignal.timeout(30000),
+    });
+
+    const payload = (await res.json().catch(() => null)) as
+      | { success?: boolean; data?: { path?: string } }
+      | null;
+
+    const path = payload?.data?.path;
+    if (!res.ok || !payload?.success || !path) {
+      console.error(
+        `[contact] Unggah lampiran ditolak CMS (HTTP ${res.status}):`,
+        JSON.stringify(payload).slice(0, 300)
+      );
+      return { error: "We couldn't upload your attachment. Please try again." };
+    }
+
+    return { path };
+  } catch (error) {
+    console.error("[contact] Gagal mengunggah lampiran:", error);
+    return { error: "We couldn't upload your attachment. Please try again." };
+  }
+}
+
 export async function POST(request: Request) {
   const ip = clientIp(request);
 
@@ -73,21 +139,23 @@ export async function POST(request: Request) {
     return fail("Too many messages from this device. Please try again later.", 429);
   }
 
-  const body = (await request.json().catch(() => null)) as Record<string, unknown> | null;
-  if (!body) {
+  const payload = await readPayload(request);
+  if (!payload) {
     return fail("Invalid request body.", 400);
   }
 
+  const { fields, attachment } = payload;
+
   // Honeypot: field tersembunyi yang hanya diisi bot. Dibalas sukses palsu
   // supaya bot tidak belajar, tanpa meneruskan apa pun ke CMS.
-  if (sanitizeText(body.website, 20)) {
-    return NextResponse.json({ success: true, message: "Thanks! Your message has been sent." });
+  if (sanitizeText(fields.website, 20)) {
+    return NextResponse.json({ success: true, message: SUCCESS_MESSAGE });
   }
 
-  const name = sanitizeText(body.name, CONTACT_LIMITS.name);
-  const email = sanitizeEmail(body.email);
-  const subject = sanitizeText(body.subject, CONTACT_LIMITS.subject);
-  const message = sanitizeMultiline(body.message, CONTACT_LIMITS.message);
+  const name = sanitizeText(fields.name, CONTACT_LIMITS.name);
+  const email = sanitizeEmail(fields.email);
+  const subject = sanitizeText(fields.subject, CONTACT_LIMITS.subject);
+  const message = sanitizeMultiline(fields.message, CONTACT_LIMITS.message);
 
   const missing = [
     !name && "name",
@@ -107,7 +175,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const token = sanitizeText(body.token, 2048);
+  const token = sanitizeText(fields.token, 2048);
   if (!(await verifyTurnstile(token, ip))) {
     return fail("Bot verification failed. Please reload the page and try again.", 400);
   }
@@ -117,24 +185,35 @@ export async function POST(request: Request) {
     return fail("The contact form is not configured yet. Please use WhatsApp or email.", 500);
   }
 
+  // Lampiran (opsional) divalidasi & diunggah lebih dulu; entri hanya dibuat
+  // kalau unggahan berhasil supaya tidak ada pesan tanpa lampiran.
+  const entry: Record<string, string> = { subject, email, name, message };
+
+  if (attachment) {
+    const uploaded = await uploadAttachment(attachment);
+    if ("error" in uploaded) return fail(uploaded.error, 400);
+
+    entry.attachment = uploaded.path;
+  }
+
   try {
     const res = await fetch(`${CMS_BASE_URL}/contact-form`, {
       method: "POST",
       headers: { "Content-Type": "application/json", "X-API-Key": CONTACT_API_KEY },
-      body: JSON.stringify({ subject, email, name, message }),
+      body: JSON.stringify(entry),
       signal: AbortSignal.timeout(15000),
     });
 
-    const payload = (await res.json().catch(() => null)) as
+    const result = (await res.json().catch(() => null)) as
       | { success?: boolean; error?: { message?: string } }
       | null;
 
-    if (!res.ok || !payload || payload.success === false) {
+    if (!res.ok || !result || result.success === false) {
       // CMS bisa membalas HTTP 200 dengan body HTML (fatal error PHP), karena
       // itu body yang gagal di-parse JSON juga diperlakukan sebagai kegagalan.
       console.error(
         `[contact] CMS menolak pesan (HTTP ${res.status}, body ${
-          payload ? JSON.stringify(payload).slice(0, 300) : "non-JSON"
+          result ? JSON.stringify(result).slice(0, 300) : "non-JSON"
         })`
       );
       return fail(
@@ -143,7 +222,7 @@ export async function POST(request: Request) {
       );
     }
 
-    return NextResponse.json({ success: true, message: "Thanks! Your message has been sent." });
+    return NextResponse.json({ success: true, message: SUCCESS_MESSAGE });
   } catch (error) {
     console.error("[contact] Gagal menghubungi CMS:", error);
     return fail("We couldn't reach the server. Please try again in a moment.", 502);

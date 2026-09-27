@@ -101,12 +101,19 @@ services/
   (daftar fitur), jadi dirender sebagai rich text di `app/services/page.tsx`
   lewat `dangerouslySetInnerHTML` (konten ditulis penyunting situs sendiri).
 - **`contact-form`** (write-only dari situs): `POST /contact-form` menerima
-  **JSON flat** — `{ subject, email, name, message }` (bukan `{ fields: … }`,
-  dan bukan multipart: API menolak body non-JSON). Validasi server CMS
-  mengembalikan 422 `validation_error` dengan `details` per field. Field
-  `attachment` opsional tetapi divalidasi sebagai **path file yang harus sudah
-  ada** di CMS; tidak ada endpoint upload (`/files`, `/media` → 404), jadi
-  lampiran belum bisa dikirim dari situs.
+  **JSON flat** — `{ subject, email, name, message, attachment? }` (bukan
+  `{ fields: … }`; multipart ditolak: "Body harus berupa JSON object"). Sukses →
+  `201 {"data":{"id":N}}`; validasi gagal → 422 `validation_error` dengan
+  `details` per field. `attachment` berisi **path** hasil unggah media dan wajib
+  menunjuk file yang sudah ada di CMS.
+- **Media upload**: `POST /media` (multipart, field wajib bernama **`file`** —
+  nama lain ditolak) → `201 {"data":{"path":"2026/09/<hash>.<ext>","url",
+  "mime","name","size"}}`. Pakai `path` itu sebagai `attachment`. Hanya API key
+  ber-scope read_write yang boleh — key konten utama ditolak ("API key tidak
+  memiliki scope read_write"), jadi `CMS_CONTACT_API_KEY` yang dipakai.
+  **Tidak ada `GET`/`DELETE /media`**: file hanya bisa dihapus dari dashboard
+  CMS, dan CMS menyaring tipe lewat MIME (mis. `image/svg+xml` ditolak; tipe tak
+  dikenal disimpan sebagai `.txt`).
 
 ## Conventions
 
@@ -153,17 +160,16 @@ services/
   route does **not exist yet** — it 404s.~~ Sudah dibuat: `app/contact/page.tsx`
   membaca kontak dari post type `information` (term `contact`) **dan** memuat
   form kontak (`components/sections/ContactForm.tsx` → `app/api/contact`).
-- 🚧 **CMS tidak bisa membuat entri `contact-form`** (diverifikasi 2026-09-27):
-  `POST /contact-form` selalu gagal dengan PHP fatal error
-  `PDOException ... fk_ce_created_by FOREIGN KEY (created_by) REFERENCES users(id)`
-  di `includes/content_entries.php:99` — API key-nya tidak terhubung ke baris
-  `users.id` yang valid. Balasan CMS berupa **HTTP 200 + HTML** (bukan JSON),
-  jadi `app/api/contact/route.ts` menilainya gagal → 502. Perlu perbaikan di
-  sisi CMS (petakan key ke user valid atau buat `created_by` nullable). Bonus:
-  error itu membocorkan stack trace + path server — sebaiknya dimatikan juga.
-- 🚧 **Lampiran belum bisa dikirim** — CMS hanya menerima JSON dan tidak punya
-  endpoint upload; field `attachment` wajib menunjuk file yang sudah ada di CMS.
-  Perlu endpoint upload di CMS dulu sebelum field lampiran diaktifkan.
+- ✅ **Pembuatan entri `contact-form` sudah diperbaiki** (2026-09-27):
+  `POST /contact-form` kini membalas `201 {"data":{"id":N}}`. Sebelumnya gagal
+  dengan PHP fatal error `fk_ce_created_by` dan membalas **HTTP 200 + HTML** —
+  karena itu `app/api/contact/route.ts` tetap memperlakukan body non-JSON
+  sebagai kegagalan (502) dan mencatatnya ke log.
+- Lampiran divalidasi di `lib/sanitize.ts` (allowlist ekstensi + magic bytes,
+  maks 4 MB) sebelum diunggah ke `POST /media`. Batas 4 MB dipilih agar aman di
+  platform dengan limit body 4,5 MB; naikkan bila self-hosted. Allowlist:
+  pdf, jpg, jpeg, png, webp, docx, xlsx, pptx — tambahkan di
+  `ALLOWED_ATTACHMENTS` bila perlu format lain.
 - `TURNSTILE_SITE_KEY` belum diisi di `.env` selama pengembangan, jadi widget
   Turnstile tidak dirender dan verifikasi bot dilewati (server mencatat
   `console.warn`). Isi kedua key Turnstile sebelum situs diluncurkan.
