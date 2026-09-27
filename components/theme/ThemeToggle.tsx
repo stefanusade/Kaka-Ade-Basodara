@@ -6,9 +6,9 @@ import { cn } from "@/lib/utils";
 import { THEME_EVENT, applyTheme, readStoredTheme, type ThemePreference } from "@/lib/theme";
 
 const OPTIONS: { value: ThemePreference; label: string; Icon: LucideIcon }[] = [
-  { value: "light", label: "Mode terang", Icon: Sun },
-  { value: "dark", label: "Mode gelap", Icon: Moon },
-  { value: "system", label: "Ikuti perangkat", Icon: Monitor },
+  { value: "light", label: "Light mode", Icon: Sun },
+  { value: "dark", label: "Dark mode", Icon: Moon },
+  { value: "system", label: "System preference", Icon: Monitor },
 ];
 
 /**
@@ -43,7 +43,7 @@ export default function ThemeToggle({ className }: { className?: string }) {
   return (
     <div
       role="group"
-      aria-label="Tema tampilan"
+      aria-label="Color theme"
       className={cn(
         "inline-flex items-center gap-0.5 rounded-full border border-white/15 bg-white/5 p-0.5",
         className

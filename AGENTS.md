@@ -48,13 +48,12 @@ app/                        Routes (App Router)
   services/                  Services page (satu section per term taxonomy `type`)
   contact/                   Contact page (data dari post type `information`)
   sitemap.ts / robots.ts     SEO
-  api/newsletter/route.ts    Newsletter stub (no provider wired yet)
   api/contact/route.ts       Form kontak: sanitasi + Turnstile + simpan ke CMS
 components/
   ui/button.tsx              shadcn-style primitive
   layout/                    Header, Footer, MobileNav
   sections/                  Hero, Services, ProjectsShowcase, BlogInsights, ContactForm
-  common/                    FadeIn, ErrorState, SectionHeading, PageHero
+  common/                    FadeIn, ErrorState, SectionHeading, PageHero, Logo
 lib/
   constants.ts               SITE info, nav links, footer links
   utils.ts                   cn(), formatDate()
@@ -74,7 +73,7 @@ services/
   request tags (`projects`, `blog`, `products`) for on-demand revalidation.
 - Only four client components: `FadeIn`, `MobileNav`, `ThemeToggle`,
   `ContactForm`. Keep it that way — everything else should stay a server
-  component. (`NewsletterForm` masih ada tetapi tidak dirender di mana pun.)
+  component.
 
 ## CMS integration (verified against the live CMS)
 
@@ -157,6 +156,11 @@ key). Semua catatan di bawah ini diverifikasi terhadap CMS live.
   `<div className="px-6 py-16 sm:py-20">` (bukan `pt-32` — padding atas sudah
   ditangani hero).
 - **Images**: `next/image` with `fill` + `sizes` for responsive lazy loading.
+- **Logo**: wordmark situs ada di `public/KAB Mono.png` (PNG **transparan**,
+  marka abu #B8B8B8 — aman di header/footer gelap tanpa diedit). Render lewat
+  `components/common/Logo.tsx` (prop `height`, lebar otomatis dari rasio
+  1629×971) supaya rasio tetap konsisten; dipakai di `Header` dan `Footer`.
+  Nama file memakai spasi — aman karena di-encode optimizer next/image.
 - **Dates**: format via `formatDate()` (`id-ID` locale).
 
 ## Known gaps / pitfalls
@@ -181,9 +185,9 @@ key). Semua catatan di bawah ini diverifikasi terhadap CMS live.
 - Footer links all point to `#`. Kontak di footer (email & WhatsApp) diambil
   dari CMS lewat `getContactInfo()` — `SITE.email`/`SITE.phone` sudah **dihapus**
   dari `lib/constants.ts` agar tidak ada placeholder yang tertinggal.
-- `components/sections/NewsletterForm.tsx` + `api/newsletter/route.ts` masih
-  stub dan **tidak dirender di mana pun** (form newsletter di footer sudah
-  dihapus). Sambungkan ke provider email sebelum dipakai lagi, atau hapus.
+- `components/sections/NewsletterForm.tsx` dan `api/newsletter/route.ts` sudah
+  **dihapus** — form newsletter footer dulu stub tanpa provider, tidak dipakai,
+  lalu dibuang. Tidak ada sisa referensi di kode.
 - 404 from the CMS renders "No content published yet"; other failures render
   a generic "updating this section" message (handled per-page).
 - `scripts/check-cms.mjs` is the fastest way to re-verify CMS auth,

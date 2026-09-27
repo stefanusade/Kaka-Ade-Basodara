@@ -44,7 +44,7 @@ export default function MobileNav({
             </Button>
 
             <div className="mt-2 flex items-center justify-between border-t border-white/10 pt-4">
-              <span className="text-sm font-medium text-slate-300">Tema tampilan</span>
+              <span className="text-sm font-medium text-slate-300">Appearance</span>
               <ThemeToggle />
             </div>
           </nav>

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Mail, MessageCircle } from "lucide-react";
+import Logo from "@/components/common/Logo";
 import { getContactInfo } from "@/services/posts.service";
 import type { ContactInfo } from "@/services/types/post.types";
 import { FOOTER_LINKS, SITE } from "@/lib/constants";
@@ -30,7 +31,9 @@ export default async function Footer() {
       <div className="mx-auto max-w-6xl">
         <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4">
           <div>
-            <h3 className="text-lg font-bold text-white">{SITE.name}</h3>
+            <h3 className="flex items-center">
+              <Logo height={30} />
+            </h3>
             <p className="mt-3 max-w-xs text-sm">
               {SITE.tagline} — hosting, web, IoT, and branding for growing businesses.
             </p>

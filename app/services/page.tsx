@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import { getServiceGroups } from "@/services/posts.service";
 import { ApiError } from "@/services/types/api.types";
 import type { ServiceGroup } from "@/services/types/post.types";
@@ -112,9 +114,13 @@ export default async function ServicesPage() {
                           {/* Deskripsi ditulis penyunting di CMS (kelola sendiri),
                               bisa memuat HTML seperti daftar fitur. */}
                           <div
-                            className="mt-4 text-sm leading-relaxed text-slate-600 dark:text-slate-400 [&_div]:mt-3 [&_li]:mt-1 [&_ul]:mt-3 [&_ul]:list-disc [&_ul]:pl-5"
+                            className="mt-4 flex-1 text-sm leading-relaxed text-slate-600 dark:text-slate-400 [&_div]:mt-3 [&_li]:mt-1 [&_ul]:mt-3 [&_ul]:list-disc [&_ul]:pl-5"
                             dangerouslySetInnerHTML={{ __html: service.description }}
                           />
+
+                          <Button asChild size="sm" className="mt-6 w-full">
+                            <Link href="/contact">Contact Us</Link>
+                          </Button>
                         </article>
                       </FadeIn>
                     ))}
