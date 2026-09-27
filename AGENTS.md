@@ -30,6 +30,9 @@ Copy `.env.example` to `.env.local` and fill in values. `.env.local` must
 | Variable | Required | Default |
 |---|---|---|
 | `CMS_API_KEY` | yes — without it protected types throw 401 | — |
+| `CMS_CONTACT_API_KEY` | no — API key read/write khusus `contact-form`; form kontak nonaktif tanpa ini | — |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | no — widget Turnstile tidak dirender tanpa ini | — |
+| `TURNSTILE_SECRET_KEY` | no — verifikasi bot dilewati tanpa ini | — |
 | `CMS_BASE_URL` | no | `https://cms.kakaadebasodara.com/api/v1` |
 | `NEXT_PUBLIC_CMS_MEDIA_URL` | no | `https://cms.kakaadebasodara.com/files` |
 | `NEXT_PUBLIC_SITE_URL` | no | `https://kakaadebasodara.com` |
@@ -46,6 +49,7 @@ app/                        Routes (App Router)
   contact/                   Contact page (data dari post type `information`)
   sitemap.ts / robots.ts     SEO
   api/newsletter/route.ts    Newsletter stub (no provider wired yet)
+  api/contact/route.ts       Form kontak: sanitasi + Turnstile + simpan ke CMS
 components/
   ui/button.tsx              shadcn-style primitive
   layout/                    Header, Footer, MobileNav
@@ -96,6 +100,13 @@ services/
   term taxonomy `type` (mis. `hosting`, `iot`). `description` bisa memuat HTML
   (daftar fitur), jadi dirender sebagai rich text di `app/services/page.tsx`
   lewat `dangerouslySetInnerHTML` (konten ditulis penyunting situs sendiri).
+- **`contact-form`** (write-only dari situs): `POST /contact-form` menerima
+  **JSON flat** — `{ subject, email, name, message }` (bukan `{ fields: … }`,
+  dan bukan multipart: API menolak body non-JSON). Validasi server CMS
+  mengembalikan 422 `validation_error` dengan `details` per field. Field
+  `attachment` opsional tetapi divalidasi sebagai **path file yang harus sudah
+  ada** di CMS; tidak ada endpoint upload (`/files`, `/media` → 404), jadi
+  lampiran belum bisa dikirim dari situs.
 
 ## Conventions
 
@@ -140,10 +151,22 @@ services/
 
 - ~~`/contact` is linked from the header CTA, hero, and mobile nav but the
   route does **not exist yet** — it 404s.~~ Sudah dibuat: `app/contact/page.tsx`
-  membaca kontak dari post type `information` (term `contact`), dan
-  `NAV_LINKS` sudah diarahkan ke `/contact` (sebelumnya anchor `/#contact`
-  yang tidak ada section-nya). Halaman ini belum punya form kontak —
-  kanal yang tersedia berasal dari CMS.
+  membaca kontak dari post type `information` (term `contact`) **dan** memuat
+  form kontak (`components/sections/ContactForm.tsx` → `app/api/contact`).
+- 🚧 **CMS tidak bisa membuat entri `contact-form`** (diverifikasi 2026-09-27):
+  `POST /contact-form` selalu gagal dengan PHP fatal error
+  `PDOException ... fk_ce_created_by FOREIGN KEY (created_by) REFERENCES users(id)`
+  di `includes/content_entries.php:99` — API key-nya tidak terhubung ke baris
+  `users.id` yang valid. Balasan CMS berupa **HTTP 200 + HTML** (bukan JSON),
+  jadi `app/api/contact/route.ts` menilainya gagal → 502. Perlu perbaikan di
+  sisi CMS (petakan key ke user valid atau buat `created_by` nullable). Bonus:
+  error itu membocorkan stack trace + path server — sebaiknya dimatikan juga.
+- 🚧 **Lampiran belum bisa dikirim** — CMS hanya menerima JSON dan tidak punya
+  endpoint upload; field `attachment` wajib menunjuk file yang sudah ada di CMS.
+  Perlu endpoint upload di CMS dulu sebelum field lampiran diaktifkan.
+- `TURNSTILE_SITE_KEY` belum diisi di `.env` selama pengembangan, jadi widget
+  Turnstile tidak dirender dan verifikasi bot dilewati (server mencatat
+  `console.warn`). Isi kedua key Turnstile sebelum situs diluncurkan.
 - Footer links all point to `#`; `SITE.phone` is a placeholder. Kontak asli
   (WhatsApp & email) ada di CMS lewat `getContactInfo()` — footer masih memakai
   `SITE.email`/`SITE.phone`.

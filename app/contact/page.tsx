@@ -6,11 +6,12 @@ import type { ContactInfo, ContactKind } from "@/services/types/post.types";
 import ErrorState from "@/components/common/ErrorState";
 import FadeIn from "@/components/common/FadeIn";
 import PageHero from "@/components/common/PageHero";
+import ContactForm from "@/components/sections/ContactForm";
 
 export const metadata: Metadata = {
   title: "Contact",
   description:
-    "Talk to Kaka Ade Basodara about hosting, web development, B2B IoT, or branding — via WhatsApp, email, or a free consultation.",
+    "Talk to Kaka Ade Basodara about hosting, web development, B2B IoT, or branding — send a message, or reach us via WhatsApp and email.",
 };
 
 const CONTACT_ICONS: Record<ContactKind, LucideIcon> = {
@@ -48,58 +49,88 @@ export default async function ContactPage() {
       <PageHero
         eyebrow="Contact"
         title="Let's Talk"
-        description="Tell us about your project — hosting, web development, B2B IoT, or branding. Pick whichever channel you prefer; we usually reply within one business day."
+        description="Tell us about your project — hosting, web development, B2B IoT, or branding. Send a message below, or use whichever channel you prefer."
       />
 
       <div className="px-6 py-16 sm:py-20">
-        <div className="mx-auto max-w-6xl">
-          {error ? (
-            <ErrorState message={error} />
-          ) : contacts.length === 0 ? (
-            <p className="text-slate-500 dark:text-slate-400">
-              No contact channels published yet.
+        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-12 lg:grid-cols-3">
+          {/* Kolom utama: form kontak */}
+          <section aria-labelledby="contact-form-heading" className="lg:col-span-2">
+            <h2
+              id="contact-form-heading"
+              className="text-2xl font-bold text-slate-900 sm:text-3xl dark:text-slate-100"
+            >
+              Send us a message
+            </h2>
+            <p className="mt-2 text-slate-600 dark:text-slate-400">
+              Fill in the form and we usually reply within one business day.
             </p>
-          ) : (
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-              {contacts.map((contact, i) => {
-                const Icon = iconForContact(contact);
-                const isExternal = contact.kind === "whatsapp" || contact.kind === "link";
 
-                const card = (
-                  <>
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400">
-                      <Icon className="h-5 w-5" aria-hidden />
-                    </span>
-                    <span className="min-w-0">
-                      <span className="block text-sm font-medium text-slate-500 dark:text-slate-400">
-                        {contact.label}
-                      </span>
-                      <span className="mt-1 block break-words font-semibold text-slate-900 group-hover:text-blue-600 dark:text-slate-100 dark:group-hover:text-blue-400">
-                        {contact.value}
-                      </span>
-                    </span>
-                  </>
-                );
-
-                return (
-                  <FadeIn key={contact.id} delay={i * 0.08}>
-                    {contact.href ? (
-                      <a
-                        href={contact.href}
-                        target={isExternal ? "_blank" : undefined}
-                        rel={isExternal ? "noopener noreferrer" : undefined}
-                        className={`${CARD_CLASS} hover:border-blue-300 dark:hover:border-blue-500/40`}
-                      >
-                        {card}
-                      </a>
-                    ) : (
-                      <div className={CARD_CLASS}>{card}</div>
-                    )}
-                  </FadeIn>
-                );
-              })}
+            <div className="mt-8 rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 dark:border-slate-800 dark:bg-slate-900">
+              <ContactForm />
             </div>
-          )}
+          </section>
+
+          {/* Kolom samping: kanal kontak dari CMS */}
+          <aside aria-labelledby="contact-channels-heading">
+            <h2
+              id="contact-channels-heading"
+              className="text-2xl font-bold text-slate-900 sm:text-3xl dark:text-slate-100"
+            >
+              Direct channels
+            </h2>
+            <p className="mt-2 text-slate-600 dark:text-slate-400">
+              Prefer to reach out right away?
+            </p>
+
+            <div className="mt-8 space-y-4">
+              {error ? (
+                <ErrorState message={error} />
+              ) : contacts.length === 0 ? (
+                <p className="text-slate-500 dark:text-slate-400">
+                  No contact channels published yet.
+                </p>
+              ) : (
+                contacts.map((contact, i) => {
+                  const Icon = iconForContact(contact);
+                  const isExternal = contact.kind === "whatsapp" || contact.kind === "link";
+
+                  const card = (
+                    <>
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400">
+                        <Icon className="h-5 w-5" aria-hidden />
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block text-sm font-medium text-slate-500 dark:text-slate-400">
+                          {contact.label}
+                        </span>
+                        <span className="mt-1 block break-words font-semibold text-slate-900 group-hover:text-blue-600 dark:text-slate-100 dark:group-hover:text-blue-400">
+                          {contact.value}
+                        </span>
+                      </span>
+                    </>
+                  );
+
+                  return (
+                    <FadeIn key={contact.id} delay={i * 0.08}>
+                      {contact.href ? (
+                        <a
+                          href={contact.href}
+                          target={isExternal ? "_blank" : undefined}
+                          rel={isExternal ? "noopener noreferrer" : undefined}
+                          className={`${CARD_CLASS} hover:border-blue-300 dark:hover:border-blue-500/40`}
+                        >
+                          {card}
+                        </a>
+                      ) : (
+                        <div className={CARD_CLASS}>{card}</div>
+                      )}
+                    </FadeIn>
+                  );
+                })
+              )}
+            </div>
+          </aside>
         </div>
       </div>
     </main>
