@@ -78,6 +78,11 @@ services/
 
 ## CMS integration (verified against the live CMS)
 
+Implementasi CMS-nya ada di repo terpisah:
+**https://github.com/stefanusade/ringan-cms** — periksa sumbernya bila perilaku
+endpoint perlu dipastikan (routing, aturan validasi, endpoint media, scope API
+key). Semua catatan di bawah ini diverifikasi terhadap CMS live.
+
 - **Auth**: send `X-API-Key: {key}`. Bearer tokens are rejected with 401.
 - **Envelope**: `{ success, data, meta: { total, page, per_page, total_pages } }`.
 - **Collection**: `GET /api/v1/{postType}?per_page=N` → array in `data`.
@@ -183,3 +188,9 @@ services/
   a generic "updating this section" message (handled per-page).
 - `scripts/check-cms.mjs` is the fastest way to re-verify CMS auth,
   envelope shape, or media URLs after CMS changes.
+
+## Referensi
+
+- **ringan-cms** — sumber implementasi CMS di balik
+  `cms.kakaadebasodara.com/api/v1`: https://github.com/stefanusade/ringan-cms
+  (post type, aturan validasi, endpoint `media`, scope API key).
