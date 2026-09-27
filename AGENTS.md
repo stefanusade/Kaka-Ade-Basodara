@@ -53,7 +53,7 @@ app/                        Routes (App Router)
 components/
   ui/button.tsx              shadcn-style primitive
   layout/                    Header, Footer, MobileNav
-  sections/                  Hero, Services, ProjectsShowcase, BlogInsights, NewsletterForm
+  sections/                  Hero, Services, ProjectsShowcase, BlogInsights, ContactForm
   common/                    FadeIn, ErrorState, SectionHeading, PageHero
 lib/
   constants.ts               SITE info, nav links, footer links
@@ -72,9 +72,9 @@ services/
   `Promise.allSettled` so one failing section never breaks the page.
 - Fetch results are cached via ISR (`revalidate: 3600` default) with
   request tags (`projects`, `blog`, `products`) for on-demand revalidation.
-- Only four client components: `FadeIn`, `MobileNav`, `NewsletterForm`,
-  `ThemeToggle`. Keep it that way — everything else should stay a server
-  component.
+- Only four client components: `FadeIn`, `MobileNav`, `ThemeToggle`,
+  `ContactForm`. Keep it that way — everything else should stay a server
+  component. (`NewsletterForm` masih ada tetapi tidak dirender di mana pun.)
 
 ## CMS integration (verified against the live CMS)
 
@@ -167,11 +167,12 @@ services/
 - `TURNSTILE_SITE_KEY` belum diisi di `.env` selama pengembangan, jadi widget
   Turnstile tidak dirender dan verifikasi bot dilewati (server mencatat
   `console.warn`). Isi kedua key Turnstile sebelum situs diluncurkan.
-- Footer links all point to `#`; `SITE.phone` is a placeholder. Kontak asli
-  (WhatsApp & email) ada di CMS lewat `getContactInfo()` — footer masih memakai
-  `SITE.email`/`SITE.phone`.
-- `api/newsletter/route.ts` is a stub — wire it to a real email provider
-  before launch.
+- Footer links all point to `#`. Kontak di footer (email & WhatsApp) diambil
+  dari CMS lewat `getContactInfo()` — `SITE.email`/`SITE.phone` sudah **dihapus**
+  dari `lib/constants.ts` agar tidak ada placeholder yang tertinggal.
+- `components/sections/NewsletterForm.tsx` + `api/newsletter/route.ts` masih
+  stub dan **tidak dirender di mana pun** (form newsletter di footer sudah
+  dihapus). Sambungkan ke provider email sebelum dipakai lagi, atau hapus.
 - 404 from the CMS renders "No content published yet"; other failures render
   a generic "updating this section" message (handled per-page).
 - `scripts/check-cms.mjs` is the fastest way to re-verify CMS auth,
