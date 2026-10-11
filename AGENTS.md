@@ -91,9 +91,9 @@ key). Semua catatan di bawah ini diverifikasi terhadap CMS live.
 - **Media**: CMS returns relative paths like `2026/09/xxxx.webp`; resolved
   against `NEXT_PUBLIC_CMS_MEDIA_URL` (default `.../files`). New image hosts
   must be added to `next.config.mjs` → `images.remotePatterns`.
-- **Current CMS state**: `blog` has **0 posts** (sections show "No articles
-  published yet" — expected, not a bug). The `product` content type does
-  **not exist** on the CMS (404); `getProducts()` is unused until it does.
+- **Current CMS state**: `blog` sudah berisi post (konten rich text HTML — lihat
+  catatan rich text di Conventions). The `product` content type does **not
+  exist** on the CMS (404); `getProducts()` is unused until it does.
 - **`project`** memakai `fields: { title, description, project_year,
   featured_image, gallery }`. `gallery` berisi array path media relatif (atau
   `null`) dan dirender sebagai carousel (`ProjectGallery`) di bagian bawah
@@ -142,6 +142,14 @@ key). Semua catatan di bawah ini diverifikasi terhadap CMS live.
   URLs use the CMS numeric id, not a slug.
 - **Styling**: Tailwind with theme tokens (`brand`, `ink`) from
   `tailwind.config.ts`; combine classes with `cn()` from `lib/utils`.
+- **Konten rich text (blog)**: `content` dari CMS adalah **HTML** dan dirender
+  apa adanya dengan `dangerouslySetInnerHTML` + kelas `prose prose-slate
+  dark:prose-invert` (plugin `@tailwindcss/typography`). Jangan render HTML-nya
+  sebagai teks. `lib/html.ts` menyediakan `stripHtml()`, `toExcerpt()`, dan
+  `rewriteMediaUrls()` (memperbaiki `src` gambar relatif di dalam HTML).
+  Bandingkan: `project.description` dan `service.description` di CMS berisi
+  teks/HTML sederhana — blog satu-satunya yang punya rich text penuh (termasuk
+  tabel).
 - **Tema (light/dark/device)**: preferensi disimpan di `localStorage` dengan
   key `kab-theme` (`light` | `dark` | `system`); kelas `dark` dipasang pada
   `<html>`. `lib/theme.ts` berisi `THEME_INIT_SCRIPT` (disuntik di `<head>`
@@ -195,10 +203,18 @@ key). Semua catatan di bawah ini diverifikasi terhadap CMS live.
   lalu dibuang. Tidak ada sisa referensi di kode.
 - 404 from the CMS renders "No content published yet"; other failures render
   a generic "updating this section" message (handled per-page).
-- Halaman detail blog (`/blog/[id]`) baru menampilkan `post.excerpt` — belum ada
-  render konten penuh. `RawBlogFields` punya `content`, tapi `BlogPost` (tipe
-  bersih) tidak. CMS `blog` masih 0 post, jadi format `content` belum bisa
-  dipastikan; tambahkan ke mapper + render rich text begitu ada data nyata.
+- Halaman detail blog (`/blog/[id]`) menampilkan `content` (rich text HTML)
+  sebagai WYSIWYG lewat `prose`. **`excerpt` tidak ada di CMS** — diturunkan
+  dari `content` dengan `toExcerpt()` di `mapBlog()`, jadi kartu daftar/beranda
+  selalu berupa teks polos tanpa tag bocor. Kalau penyunting menambahkan gambar
+  di dalam konten, `rewriteMediaUrls()` yang mengubah path relatifnya menjadi
+  URL penuh saat render.
+- **Cache fetch Next (`.next/cache`) terbawa antar build.** `revalidate: 3600`
+  membuat respons CMS yang kosong (mis. saat blog masih 0 post) bisa dipakai
+  ulang oleh build berikutnya, sehingga halaman statis tetap bilang "No
+  articles published yet" walau CMS sudah terisi. Untuk verifikasi lokal:
+  `rm -rf .next/cache && npm run build`. Di produksi pakai revalidation tag
+  (`projects`, `blog`, `products`) lewat webhook agar tidak menunggu 1 jam.
 - `scripts/check-cms.mjs` is the fastest way to re-verify CMS auth,
   envelope shape, or media URLs after CMS changes.
 

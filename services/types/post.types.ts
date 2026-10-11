@@ -1,9 +1,10 @@
 import type { RawPost } from "./api.types";
+import { toExcerpt } from "../../lib/html";
 
 // ---- Raw shapes (exactly what the CMS returns) ----
-// NOTE: confirmed against a real sample response for "project".
-// "blog" and "product" field names are best-guess placeholders —
-// adjust RawBlogFields / RawProductFields once you see real payloads.
+// NOTE: confirmed against real sample responses for "project" and "blog".
+// "product" field names are still best-guess placeholders — adjust
+// RawProductFields once you see real payloads.
 
 export interface RawProjectFields {
   title: string;
@@ -15,10 +16,12 @@ export interface RawProjectFields {
 
 export type RawProject = RawPost<RawProjectFields, { type: string[] }>;
 
+// Bentuk nyata dari CMS: { title, content, featured_image }. `content` berupa
+// rich text HTML dan CMS TIDAK punya field excerpt — excerpt diturunkan dari
+// content lewat toExcerpt() di mapBlog().
 export interface RawBlogFields {
   title: string;
   content?: string;
-  excerpt?: string;
   featured_image: string | null;
 }
 
@@ -70,7 +73,10 @@ export interface Project {
 export interface BlogPost {
   id: number;
   title: string;
+  /** Teks polos hasil pembersihan `content` — aman untuk kartu/daftar. */
   excerpt: string;
+  /** Rich text HTML apa adanya dari CMS, dirender WYSIWYG di halaman detail. */
+  content: string;
   publishedAt: string;
   image: string | null;
 }
@@ -128,10 +134,13 @@ export function mapProject(raw: RawProject): Project {
 }
 
 export function mapBlog(raw: RawBlog): BlogPost {
+  const content = raw.fields.content ?? "";
+
   return {
     id: raw.id,
     title: raw.fields.title,
-    excerpt: raw.fields.excerpt ?? raw.fields.content?.slice(0, 160) ?? "",
+    excerpt: toExcerpt(content),
+    content,
     publishedAt: raw.created_at,
     image: raw.fields.featured_image,
   };

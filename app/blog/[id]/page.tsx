@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getBlogPostById } from "@/services/posts.service";
 import { resolveMediaUrl } from "@/lib/media";
+import { rewriteMediaUrls } from "@/lib/html";
 import { formatDate } from "@/lib/utils";
 import PageHero from "@/components/common/PageHero";
 import { Button } from "@/components/ui/button";
@@ -47,10 +48,14 @@ export default async function BlogDetailPage({ params }: Props) {
             </div>
 
             <div className="mt-12 grid grid-cols-1 gap-10 lg:grid-cols-3">
-              <article className="lg:col-span-2">
-                <p className="whitespace-pre-line leading-relaxed text-slate-700 dark:text-slate-300">
-                  {post.excerpt}
-                </p>
+              {/* Konten blog adalah rich text HTML dari CMS (ditulis penyunting
+                  situs sendiri) — dirender apa adanya dengan gaya `prose`. */}
+              <article className="prose prose-slate max-w-none lg:col-span-2 dark:prose-invert">
+                {post.content ? (
+                  <div dangerouslySetInnerHTML={{ __html: rewriteMediaUrls(post.content) }} />
+                ) : (
+                  <p>{post.excerpt}</p>
+                )}
               </article>
 
               <aside className="space-y-8">
