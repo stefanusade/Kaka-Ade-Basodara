@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import Image from "next/image";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getBlogPostById } from "@/services/posts.service";
 import { resolveMediaUrl } from "@/lib/media";
 import { formatDate } from "@/lib/utils";
 import PageHero from "@/components/common/PageHero";
+import { Button } from "@/components/ui/button";
 import { ApiError } from "@/services/types/api.types";
 
 interface Props {
@@ -32,20 +34,48 @@ export default async function BlogDetailPage({ params }: Props) {
         <PageHero eyebrow={formatDate(post.publishedAt)} title={post.title} />
 
         <div className="px-6 py-16 sm:py-20">
-          <article className="mx-auto max-w-3xl">
+          <div className="mx-auto max-w-6xl">
             <div className="relative aspect-[16/9] overflow-hidden rounded-2xl bg-slate-100 dark:bg-slate-800">
               <Image
                 src={resolveMediaUrl(post.image)}
                 alt={post.title}
                 fill
-                sizes="768px"
+                sizes="(max-width: 1152px) 100vw, 1152px"
                 className="object-cover"
                 priority
               />
             </div>
 
-            <p className="mt-8 leading-relaxed text-slate-700 dark:text-slate-300">{post.excerpt}</p>
-          </article>
+            <div className="mt-12 grid grid-cols-1 gap-10 lg:grid-cols-3">
+              <article className="lg:col-span-2">
+                <p className="whitespace-pre-line leading-relaxed text-slate-700 dark:text-slate-300">
+                  {post.excerpt}
+                </p>
+              </article>
+
+              <aside className="space-y-8">
+                <dl className="rounded-2xl border border-slate-200 p-6 dark:border-slate-800">
+                  <div className="flex items-center justify-between gap-4">
+                    <dt className="text-sm text-slate-500 dark:text-slate-400">Published</dt>
+                    <dd className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                      {formatDate(post.publishedAt)}
+                    </dd>
+                  </div>
+                </dl>
+
+                <Button asChild className="w-full">
+                  <Link href="/contact">Get a Free Consultation</Link>
+                </Button>
+
+                <Link
+                  href="/blog"
+                  className="inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:underline dark:text-blue-400"
+                >
+                  <span aria-hidden>←</span> All insights
+                </Link>
+              </aside>
+            </div>
+          </div>
         </div>
       </main>
     );

@@ -195,6 +195,10 @@ key). Semua catatan di bawah ini diverifikasi terhadap CMS live.
   lalu dibuang. Tidak ada sisa referensi di kode.
 - 404 from the CMS renders "No content published yet"; other failures render
   a generic "updating this section" message (handled per-page).
+- Halaman detail blog (`/blog/[id]`) baru menampilkan `post.excerpt` — belum ada
+  render konten penuh. `RawBlogFields` punya `content`, tapi `BlogPost` (tipe
+  bersih) tidak. CMS `blog` masih 0 post, jadi format `content` belum bisa
+  dipastikan; tambahkan ke mapper + render rich text begitu ada data nyata.
 - `scripts/check-cms.mjs` is the fastest way to re-verify CMS auth,
   envelope shape, or media URLs after CMS changes.
 
