@@ -52,7 +52,8 @@ app/                        Routes (App Router)
 components/
   ui/button.tsx              shadcn-style primitive
   layout/                    Header, Footer, MobileNav
-  sections/                  Hero, Services, ProjectsShowcase, BlogInsights, ContactForm
+  sections/                  Hero, Services, ProjectsShowcase, BlogInsights, ContactForm,
+                             ProjectGallery
   common/                    FadeIn, ErrorState, SectionHeading, PageHero, Logo
 lib/
   constants.ts               SITE info, nav links, footer links
@@ -71,9 +72,9 @@ services/
   `Promise.allSettled` so one failing section never breaks the page.
 - Fetch results are cached via ISR (`revalidate: 3600` default) with
   request tags (`projects`, `blog`, `products`) for on-demand revalidation.
-- Only four client components: `FadeIn`, `MobileNav`, `ThemeToggle`,
-  `ContactForm`. Keep it that way — everything else should stay a server
-  component.
+- Only five client components: `FadeIn`, `MobileNav`, `ThemeToggle`,
+  `ContactForm`, `ProjectGallery`. Keep it that way — everything else should
+  stay a server component.
 
 ## CMS integration (verified against the live CMS)
 
@@ -93,6 +94,10 @@ key). Semua catatan di bawah ini diverifikasi terhadap CMS live.
 - **Current CMS state**: `blog` has **0 posts** (sections show "No articles
   published yet" — expected, not a bug). The `product` content type does
   **not exist** on the CMS (404); `getProducts()` is unused until it does.
+- **`project`** memakai `fields: { title, description, project_year,
+  featured_image, gallery }`. `gallery` berisi array path media relatif (atau
+  `null`) dan dirender sebagai carousel (`ProjectGallery`) di bagian bawah
+  `/projects/[id]`; `mapProject()` menormalkannya menjadi `string[]` kosong.
 - **`information`** (2 entri saat ini: WhatsApp & email) memakai
   `fields: { label, value }` dan menandai tipe kontaknya lewat term `contact`
   pada taxonomy `category`.

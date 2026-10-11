@@ -63,6 +63,8 @@ export interface Project {
   year: number;
   category: string;
   image: string | null;
+  /** Path media galeri (relatif, sudah siap di-resolve); kosong bila tidak ada. */
+  gallery: string[];
 }
 
 export interface BlogPost {
@@ -121,6 +123,7 @@ export function mapProject(raw: RawProject): Project {
     year: raw.fields.project_year,
     category: raw.terms?.type?.[0] ?? "general",
     image: raw.fields.featured_image,
+    gallery: raw.fields.gallery ?? [],
   };
 }
 
